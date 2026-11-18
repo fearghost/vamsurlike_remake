@@ -15,6 +15,8 @@ var auto_attack: AutoAttack  # reference to AutoAttack component
 
 
 func _ready() -> void:
+	add_to_group("player")
+
 	# Create dummy sprite (blue ColorRect) if no child sprite exists
 	if find_child("DummySprite") == null:
 		var dummy := ColorRect.new()
@@ -41,10 +43,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if not is_attacking:
-		velocity = current_direction * move_speed
-	else:
-		velocity = Vector2.ZERO
+	velocity = current_direction * move_speed
 	move_and_slide()
 
 

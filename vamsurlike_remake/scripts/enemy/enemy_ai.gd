@@ -31,6 +31,9 @@ func _ready() -> void:
 	# Add to enemies group so AutoAttack can find them
 	add_to_group("enemies")
 
+	# Auto-discover player reference
+	player_ref = _find_player()
+
 	# Initialize from enemy_data if set
 	if enemy_data != null:
 		current_hp = enemy_data.hp
@@ -137,3 +140,21 @@ func take_damage(amount: int) -> void:
 func _on_defeated() -> void:
 	# TODO: Spawn drop items from enemy_data.drop_table
 	pass
+
+
+func _find_player() -> Node2D:
+	# Search for PlayerController in the scene tree
+	var tree := get_tree()
+	if tree == null:
+		return null
+
+	for node in tree.get_nodes_in_group("player"):
+		if node is CharacterBody2D:
+			return node as Node2D
+
+	# Fallback: find by name or type
+	for node in tree.get_root().get_children():
+		if node is PlayerController:
+			return node
+
+	return null

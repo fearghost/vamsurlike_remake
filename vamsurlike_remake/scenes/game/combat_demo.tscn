@@ -24,8 +24,6 @@ offset_right = 16.0
 offset_bottom = 16.0
 material = SubResource.load("ColorRect_1")
 
-[node name="AutoAttack" type="Node2D" parent="."]
-
 [node name="Spawner" type="Node2D" parent="."]
 wave_data = [
 	{

@@ -6,7 +6,7 @@ var current_wave: int = 0
 var is_waving_active: bool = false
 var remaining_enemies: int = 0
 
-var spawn_timer: Timer
+var wave_timer: Timer
 var _enemies_alive: int = 0
 signal all_waves_cleared
 
