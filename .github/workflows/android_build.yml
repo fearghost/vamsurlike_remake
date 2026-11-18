@@ -39,7 +39,8 @@ jobs:
         run: |
           wget --tries=3 --timeout=60 -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -O templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/4.3.stable
-          unzip -o templates.tpz --strip-components=1 -d ~/.local/share/godot/export_templates/4.3.stable
+          unzip -o templates.tpz -d /tmp/godot_templates
+          find /tmp/godot_templates/templates -type f -exec mv {} ~/.local/share/godot/export_templates/4.3.stable/ \;
 
       - name: Clean editor cache
         run: |
