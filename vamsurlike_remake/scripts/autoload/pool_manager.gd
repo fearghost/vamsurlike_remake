@@ -1,6 +1,5 @@
 ## PoolManager handles object pooling for projectiles, enemies, and effects.
 ## Reduces instantiation overhead and improves performance.
-class_name PoolManager
 extends Node
 
 ## Initialize the group registration so other nodes can find this singleton.

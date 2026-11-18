@@ -1,6 +1,5 @@
 ## SaveManager handles persistent game data using JSON serialization.
 ## Saves to user://save_data.json for cross-session persistence.
-class_name SaveManager
 extends Node
 
 var save_data: Dictionary = {

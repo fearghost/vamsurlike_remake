@@ -137,7 +137,9 @@ func _execute_transition(step: Dictionary) -> void:
 	if not full_path.begins_with("res://"):
 		full_path = "res://scenes/game/%s" % target_scene
 
-	SceneTransition.transition_to_scene(full_path)
+	var st := get_node_or_null("/root/SceneTransition")
+	if st != null:
+		st.transition_to_scene(full_path)
 
 
 func _on_step_completed() -> void:

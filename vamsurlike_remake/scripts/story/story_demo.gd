@@ -25,4 +25,6 @@ func _ready() -> void:
 
 func _on_sequence_finished() -> void:
 	print("Story sequence finished. Transitioning to combat.")
-	SceneTransition.transition_to_combat()
+	var st := get_node_or_null("/root/SceneTransition")
+	if st != null:
+		st.transition_to_combat()

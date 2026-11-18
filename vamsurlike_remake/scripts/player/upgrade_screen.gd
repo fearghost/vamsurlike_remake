@@ -43,4 +43,4 @@ func _save_and_return() -> void:
 		sm.save()
 
 	# Transition to main menu
-	SceneTransition.transition_to_main_menu()
+	get_node("/root/SceneTransition").transition_to_main_menu()
