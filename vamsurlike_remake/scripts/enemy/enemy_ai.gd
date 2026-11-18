@@ -146,8 +146,7 @@ func _fire_projectile(direction: Vector2) -> void:
 			if enemy_data != null:
 				projectile.set_damage(enemy_data.attack)
 	else:
-		# Fallback: instantiate directly
-		var projectile_scene := preload("res://scenes/game/projectile.tscn") as PackedScene
+		# Fallback: instantiate directly (class-level projectile_scene already loaded)
 		if projectile_scene != null:
 			var projectile: Projectile = projectile_scene.instantiate() as Projectile
 			if projectile != null:

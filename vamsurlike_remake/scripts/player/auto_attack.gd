@@ -44,7 +44,7 @@ func find_nearest_enemy() -> Node2D:
 	if parent == null:
 		return null
 
-	var parent_pos: Vector2 = global_position
+	var parent_pos: Vector2 = Vector2.ZERO
 	if parent is Node2D:
 		parent_pos = (parent as Node2D).global_position
 	var closest: Node2D = null
