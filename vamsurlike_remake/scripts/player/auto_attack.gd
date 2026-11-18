@@ -44,17 +44,15 @@ func find_nearest_enemy() -> Node2D:
 	if parent == null:
 		return null
 
-	var parent_pos: Vector2
+	var parent_pos: Vector2 = global_position
 	if parent is Node2D:
 		parent_pos = (parent as Node2D).global_position
-	else:
-		parent_pos = global_position
 	var closest: Node2D = null
 	var closest_dist_sq: float = attack_range * attack_range
 
 	for child in parent.get_tree().get_nodes_in_group("enemies"):
 		if child is Node2D:
-			var dist_sq := child.global_position.distance_squared_to(parent_pos)
+			var dist_sq: float = (child as Node2D).global_position.distance_squared_to(parent_pos)
 			if dist_sq < closest_dist_sq:
 				closest_dist_sq = dist_sq
 				closest = child
@@ -76,7 +74,7 @@ func fire_projectile(target_position: Vector2) -> void:
 	# Try to use PoolManager for projectile pooling
 	var pool_manager := get_tree().get_first_node_in_group("pool_manager")
 	if pool_manager != null and pool_manager.has_method("acquire"):
-		var projectile := pool_manager.acquire("projectile")
+		var projectile: Projectile = pool_manager.acquire("projectile") as Projectile
 		if projectile != null:
 			projectile.global_position = parent.global_position
 			if projectile.has_method("set_velocity"):
@@ -87,9 +85,9 @@ func fire_projectile(target_position: Vector2) -> void:
 				projectile.set_damage(attack_damage)
 	else:
 		# Fallback: instantiate a simple projectile if PoolManager is unavailable
-		var projectile_scene := preload("res://scenes/game/projectile.tscn")
+		var projectile_scene := preload("res://scenes/game/projectile.tscn") as PackedScene
 		if projectile_scene != null:
-			var projectile := projectile_scene.instantiate()
+			var projectile: Projectile = projectile_scene.instantiate() as Projectile
 			projectile.global_position = parent.global_position
 			if projectile.has_method("set_direction"):
 				projectile.set_direction(direction)

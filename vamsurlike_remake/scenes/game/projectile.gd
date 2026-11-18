@@ -14,10 +14,10 @@ var velocity: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
-	# Set sprite color based on owner
+	# Set sprite color based on source_type
 	var sprite := find_child("Sprite")
 	if sprite != null:
-		if owner == "player":
+		if source_type == "player":
 			sprite.color = Color(1, 1, 0, 1)       # Yellow for player
 		else:
 			sprite.color = Color(1, 0.5, 0, 1)      # Orange for enemy
@@ -40,10 +40,10 @@ func set_damage(amount: int) -> void:
 
 
 func _on_body_entered(body: Node) -> void:
-	if owner == "player" and body is EnemyAI:
+	if source_type == "player" and body is EnemyAI:
 		body.take_damage(damage)
 		_on_destroyed()
-	elif owner == "enemy":
+	elif source_type == "enemy":
 		# Check if body is the player via group membership
 		if body.is_in_group("player"):
 			var stats := body.get_node_or_null("PlayerStats")

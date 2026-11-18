@@ -162,8 +162,10 @@ func take_damage(amount: int) -> void:
 	if not is_alive:
 		return
 
-	var defense_value := enemy_data.defense if enemy_data != null else 0
-	var actual_damage := max(1, amount - defense_value)
+	var defense_value: int = 0
+	if enemy_data != null:
+		defense_value = enemy_data.defense
+	var actual_damage: int = max(1, amount - defense_value)
 	current_hp -= actual_damage
 
 	if current_hp <= 0:

@@ -74,7 +74,7 @@ func execute_next_step() -> void:
 
 func _execute_move(step: Dictionary) -> void:
 	var actor_name: String = step.get("actor", "")
-	var waypoints_raw := step.get("waypoints", [])
+	var waypoints_raw: Array = step.get("waypoints", [])
 
 	if not actors.has(actor_name):
 		push_warning("StoryDirector: Actor '%s' not found in actors dictionary" % actor_name)
@@ -115,8 +115,8 @@ func _execute_move(step: Dictionary) -> void:
 
 
 func _execute_dialogue(step: Dictionary) -> void:
-	var speaker := step.get("speaker", "")
-	var text := step.get("text", "")
+	var speaker: String = step.get("speaker", "")
+	var text: String = step.get("text", "")
 
 	dialogue_started.emit(text, speaker)
 
@@ -126,14 +126,14 @@ func _execute_dialogue(step: Dictionary) -> void:
 
 
 func _execute_transition(step: Dictionary) -> void:
-	var target_scene := step.get("scene", "")
+	var target_scene: String = step.get("scene", "")
 	if target_scene.is_empty():
 		push_warning("StoryDirector: No scene specified in transition step")
 		_on_step_completed()
 		return
 
 	# Build full path if only filename was given
-	var full_path := target_scene
+	var full_path: String = target_scene
 	if not full_path.begins_with("res://"):
 		full_path = "res://scenes/game/%s" % target_scene
 
