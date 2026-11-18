@@ -11,37 +11,39 @@ jobs:
   build-android:
     name: Build Android APK
     runs-on: ubuntu-latest
-    container:
-      image: barichello/godot-ci:4.3-stable
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Download Godot 4.3 CLI
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64 -O godot
+          chmod +x godot
+
       - name: Generate debug keystore
         run: |
+          mkdir -p vamsurlike_remake/keystore
           keytool -genkeypair \
             -alias androidDebugKey \
             -keyalg RSA \
             -keysize 2048 \
             -validity 10000 \
-            -keystore build/android/debug.keystore \
+            -keystore vamsurlike_remake/keystore/debug.keystore \
             -storepass android \
             -keypass android \
             -dname "CN=Android Debug,O=Android,C=US"
-        working-directory: ${{ github.workspace }}
 
       - name: Build Android APK (Debug)
         run: |
-          godot --headless \
+          ./godot --headless \
             --path vamsurlike_remake \
             --export-debug "Android" \
             build/android/vamsurlike_remake.apk
-        working-directory: ${{ github.workspace }}
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: vamsurlike_remake-android-debug
-          path: build/android/vamsurlike_remake.apk
+          path: vamsurlike_remake/build/android/vamsurlike_remake.apk
           retention-days: 7
