@@ -12,7 +12,7 @@ var chase_distance: float = 50.0
 
 # Ranged state
 var ranged_target_distance: float = 200.0
-var last_shot_time: float = 0.0
+var last_shot_time: float = -999.0
 var shot_interval: float = 2.0
 var projectile_scene: PackedScene
 

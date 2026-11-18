@@ -60,6 +60,5 @@ func _on_all_waves_cleared() -> void:
 		SaveManager.save_data["cleared_stages"].append(GameManager.current_stage_id)
 	SaveManager.save()
 
-	# For now, transition back to main menu
-	await get_tree().create_timer(2.0).timeout
-	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
+	# Transition to upgrade screen
+	get_tree().change_scene_to_file("res://scenes/game/upgrade_screen.tscn")

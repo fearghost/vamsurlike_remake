@@ -18,11 +18,12 @@ func _ready() -> void:
 	add_to_group("player")
 
 	# Create dummy sprite (blue ColorRect) if no child sprite exists
-	if find_child("DummySprite") == null:
+	if find_child("Body") == null:
 		var dummy := ColorRect.new()
-		dummy.name = "DummySprite"
+		dummy.name = "Body"
 		dummy.color = Color.BLUE
 		dummy.position = Vector2(-16, -16)
+		dummy.size = Vector2(32, 32)
 		add_child(dummy)
 
 	# Add collision shape for Area2D projectile detection

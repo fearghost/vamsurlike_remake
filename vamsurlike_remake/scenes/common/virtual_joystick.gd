@@ -26,7 +26,7 @@ func _ready() -> void:
 	queue_redraw()
 
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		if event.pressed and touch_id == -1:
 			# Only activate if touch is in the lower half of the screen
