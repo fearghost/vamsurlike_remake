@@ -2,7 +2,7 @@ class_name StoryDirector
 extends Node2D
 
 ## Manages story sequence execution, parsing JSON scripts and orchestrating
-## actor movement, dialogue, and scene transitions.
+## actor movement (Tween), dialogue display, and scene transitions.
 
 signal sequence_finished
 signal dialogue_started(text: String, speaker: String)
@@ -73,7 +73,7 @@ func execute_next_step() -> void:
 
 func _execute_move(step: Dictionary) -> void:
 	var actor_name := step.get("actor", "")
-	var waypoints := step.get("waypoints", [])
+	var waypoints_raw := step.get("waypoints", [])
 
 	if not actors.has(actor_name):
 		push_warning("StoryDirector: Actor '%s' not found in actors dictionary" % actor_name)
@@ -81,8 +81,36 @@ func _execute_move(step: Dictionary) -> void:
 		return
 
 	var actor_node = actors[actor_name]
-	if actor_node is Node2D:
-		actor_moved.emit(actor_name, Vector2(waypoints[-1][0], waypoints[-1][1]))
+	if not actor_node is Node2D:
+		push_warning("StoryDirector: Actor '%s' is not a Node2D" % actor_name)
+		_on_step_completed()
+		return
+
+	# Convert JSON arrays [x, y] to Vector2
+	var waypoints: Array[Vector2] = []
+	for wp in waypoints_raw:
+		if wp is Array and wp.size() >= 2:
+			waypoints.append(Vector2(wp[0], wp[1]))
+
+	if waypoints.is_empty():
+		actor_moved.emit(actor_name, actor_node.position)
+		_on_step_completed()
+		return
+
+	# Tween between consecutive waypoints
+	var tween := create_tween()
+	tween.set_ease(Tween.EASE_OUT_IN)
+	for i in range(waypoints.size() - 1):
+		var from_pos := waypoints[i]
+		var to_pos := waypoints[i + 1]
+		var distance := from_pos.distance_to(to_pos)
+		var duration := distance / 150.0
+		tween.tween_property(actor_node, "position", to_pos, duration)
+
+	await tween.finished
+
+	actor_moved.emit(actor_name, waypoints[-1])
+	_on_step_completed()
 
 
 func _execute_dialogue(step: Dictionary) -> void:
@@ -91,15 +119,19 @@ func _execute_dialogue(step: Dictionary) -> void:
 
 	dialogue_started.emit(text, speaker)
 
+	await dialogue_completed
+
+	_on_step_completed()
+
 
 func _execute_transition(step: Dictionary) -> void:
 	var target_scene := step.get("scene", "")
 	if target_scene.is_empty():
 		push_warning("StoryDirector: No scene specified in transition step")
+		_on_step_completed()
 		return
 
-	# Transition is handled externally; signal completion
-	_on_step_completed()
+	SceneTransition.transition_to_combat()
 
 
 func _on_step_completed() -> void:

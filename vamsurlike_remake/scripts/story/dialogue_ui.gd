@@ -5,13 +5,14 @@ extends CanvasLayer
 ## Displays dialogue text at the bottom 30% of the screen.
 ## Connected to StoryDirector.signals for show/hide lifecycle.
 
-
 @onready var speaker_label: Label = $SpeakerLabel
 @onready var text_label: Label = $TextLabel
 @onready var continue_button: Button = $ContinueButton
 @onready var background: ColorRect = $Background
 
 var is_displaying: bool = false
+
+signal dialogue_completed
 
 
 func _ready() -> void:
@@ -33,3 +34,4 @@ func hide_dialogue() -> void:
 
 func _on_continue_button_pressed() -> void:
 	hide_dialogue()
+	dialogue_completed.emit()

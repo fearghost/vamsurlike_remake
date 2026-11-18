@@ -17,7 +17,7 @@ func _ready() -> void:
 
 	# Connect dialogue signals to UI
 	story_director.dialogue_started.connect(dialogue_ui.show_dialogue)
-	story_director.dialogue_ended.connect(dialogue_ui.hide_dialogue)
+	story_director.dialogue_completed.connect(dialogue_ui.hide_dialogue)
 
 	# Connect sequence finished to scene transition
 	story_director.sequence_finished.connect(_on_sequence_finished)
@@ -25,4 +25,4 @@ func _ready() -> void:
 
 func _on_sequence_finished() -> void:
 	print("Story sequence finished. Transitioning to combat.")
-	get_tree().change_scene_to_file("res://scenes/game/combat_demo.tscn")
+	SceneTransition.transition_to_combat()
