@@ -15,9 +15,6 @@ jobs:
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-      GODOT_ANDROID_KEYSTORE_DEBUG_PATH: vamsurlike_remake/keystore/debug.keystore
-      GODOT_ANDROID_KEYSTORE_DEBUG_USER: androidDebugKey
-      GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
 
     steps:
       - name: Checkout repository
@@ -28,19 +25,6 @@ jobs:
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip -O godot.zip
           unzip -o godot.zip
           chmod +x Godot_v4.3-stable_linux.x86_64
-
-      - name: Generate debug keystore
-        run: |
-          mkdir -p vamsurlike_remake/keystore
-          keytool -genkeypair \
-            -alias androidDebugKey \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -keystore vamsurlike_remake/keystore/debug.keystore \
-            -storepass android \
-            -keypass android \
-            -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Install Android export templates
         run: |
