@@ -1,44 +1,51 @@
 class_name Spawner
 extends Node2D
 
+
 @export var wave_data: Array[Dictionary] = []
 var current_wave: int = 0
 var is_waving_active: bool = false
-var remaining_enemies: int = 0
-
-var wave_timer: Timer
 var _enemies_alive: int = 0
+
+var spawn_timer: Timer
+var wave_delay_timer: Timer
 signal all_waves_cleared
 
 
 func _ready() -> void:
-	# Create main wave timer
-	wave_timer = Timer.new()
-	wave_timer.wait_time = 1.0
-	wave_timer.autostart = false
-	wave_timer.one_shot = true
-	wave_timer.timeout.connect(_on_wave_timer_timeout)
-	add_child(wave_timer)
+	# Timer for staggered enemy spawning within a wave
+	spawn_timer = Timer.new()
+	spawn_timer.wait_time = 1.0
+	spawn_timer.autostart = false
+	spawn_timer.one_shot = true
+	spawn_timer.timeout.connect(_on_spawn_timer_timeout)
+	add_child(spawn_timer)
+
+	# Timer for delay between waves
+	wave_delay_timer = Timer.new()
+	wave_delay_timer.wait_time = 2.0
+	wave_delay_timer.autostart = false
+	wave_delay_timer.one_shot = true
+	wave_delay_timer.timeout.connect(_on_wave_delay_timeout)
+	add_child(wave_delay_timer)
 
 
 func start_wave(wave_index: int) -> void:
 	if wave_index >= wave_data.size():
-		is_waving_active = false
+		all_waves_cleared.emit()
 		return
 
 	current_wave = wave_index
 	var wave := wave_data[wave_index]
-
-	remaining_enemies = 0
-	for enemy_entry in wave["enemies"]:
-		remaining_enemies += 1
-
+	_enemies_alive = wave["enemies"].size()
 	is_waving_active = true
+
 	_spawn_next_enemy(wave)
 
 
 func _spawn_next_enemy(wave: Dictionary) -> void:
-	if not is_waving_active or remaining_enemies <= 0:
+	if not is_waving_active or wave["enemies"].is_empty():
+		# No more enemies to spawn in this wave — wait for remaining to die
 		return
 
 	var enemy_entry := wave["enemies"].pop_front() as String
@@ -91,27 +98,43 @@ func spawn_enemy(enemy_data: EnemyData, position: Vector2) -> void:
 	enemy.enemy_data = enemy_data
 	enemy.global_position = position
 
+	# Connect enemy death signal to track remaining enemies
+	enemy.died.connect(_on_enemy_died)
+
 	get_tree().current_scene.add_child(enemy)
 
 
-func _on_wave_timer_timeout() -> void:
-	if not is_waving_active:
-		return
-
+func _on_spawn_timer_timeout() -> void:
 	var wave := wave_data[current_wave]
 
 	if wave["enemies"].is_empty():
-		# All enemies in this wave have been queued
-		if remaining_enemies <= 0:
-			is_waving_active = false
-			print("All waves cleared!")
-			all_waves_cleared.emit()
-			return
+		# All enemies queued, wait for them to die
+		is_waving_active = false
+		return
 
 	# Wait for the configured interval before spawning next enemy
 	var spawn_interval := wave.get("spawn_interval", 1.0) as float
-	wave_timer.wait_time = spawn_interval
-	wave_timer.start()
+	spawn_timer.wait_time = spawn_interval
+	spawn_timer.start()
+
+
+func _on_enemy_died() -> void:
+	_enemies_alive -= 1
+
+	if _enemies_alive <= 0:
+		# Current wave cleared
+		if current_wave + 1 < wave_data.size():
+			# Start next wave after a delay
+			wave_delay_timer.wait_time = 2.0
+			wave_delay_timer.start()
+		else:
+			# All waves cleared
+			is_waving_active = false
+			all_waves_cleared.emit()
+
+
+func _on_wave_delay_timeout() -> void:
+	start_wave(current_wave + 1)
 
 
 func all_waves_cleared() -> bool:

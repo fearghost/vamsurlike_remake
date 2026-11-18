@@ -17,15 +17,17 @@ var shot_interval: float = 2.0
 var projectile_scene: PackedScene
 
 # Charge state
-var charge_cooldown: float = 0.0
-var is_charging: bool = false
-var charge_wait_time: float = 1.0
-var charge_duration: float = 0.5
-var charge_speed_multiplier: float = 2.0
+enum ChargeState { IDLE, CHARGING, COOLDOWN }
+var charge_state: int = ChargeState.IDLE
 var charge_timer: float = 0.0
+const CHARGE_DURATION: float = 0.5
+const CHARGE_COOLDOWN: float = 2.0
 
 # Combat state
 var current_hp: int = 50
+var is_alive: bool = true
+
+signal died
 
 func _ready() -> void:
 	# Add to enemies group so AutoAttack can find them
@@ -39,9 +41,13 @@ func _ready() -> void:
 		current_hp = enemy_data.hp
 		current_pattern = enemy_data.ai_pattern
 		move_speed = enemy_data.speed
-	
+
+	# Load projectile scene for ranged attacks
+	projectile_scene = preload("res://scenes/game/projectile.tscn")
+
 	# Create dummy sprite (ColorRect)
 	var sprite := ColorRect.new()
+	sprite.name = "Sprite"
 	sprite.size = Vector2(32, 32)
 	sprite.position = Vector2(-16, -16)
 	match current_pattern:
@@ -52,7 +58,7 @@ func _ready() -> void:
 		_:
 			sprite.color = Color(1.0, 0.3, 0.3)  # Red for chase
 	add_child(sprite)
-	
+
 	# Add collision shape for CharacterBody2D
 	var collision := CollisionShape2D.new()
 	var shape := CircleShape2D.new()
@@ -61,9 +67,9 @@ func _ready() -> void:
 	add_child(collision)
 
 func _process(delta: float) -> void:
-	if player_ref == null:
+	if not is_alive or player_ref == null:
 		return
-	
+
 	match current_pattern:
 		"chase":
 			_ai_chase(delta)
@@ -80,7 +86,7 @@ func _ai_chase(delta: float) -> void:
 func _ai_ranged(delta: float) -> void:
 	var distance_to_player := global_position.distance_to(player_ref.global_position)
 	var direction := (player_ref.global_position - global_position).normalized()
-	
+
 	if distance_to_player > ranged_target_distance:
 		# Move toward player to get in range
 		velocity = direction * move_speed
@@ -90,56 +96,83 @@ func _ai_ranged(delta: float) -> void:
 	else:
 		# Maintain position, stop moving
 		velocity = Vector2.ZERO
-	
+
 	move_and_slide()
-	
-	# Fire projectiles at intervals
-	if projectile_scene != null and Time.get_ticks_msec() / 1000.0 - last_shot_time >= shot_interval:
-		last_shot_time = Time.get_ticks_msec() / 1000.0
+
+	# Fire projectiles at intervals using PoolManager
+	var current_time := Time.get_ticks_msec() / 1000.0
+	if current_time - last_shot_time >= shot_interval:
+		last_shot_time = current_time
 		_fire_projectile(direction)
 
 func _ai_charge(delta: float) -> void:
-	if is_charging:
-		charge_timer += delta
-		var direction := (player_ref.global_position - global_position).normalized()
-		velocity = direction * move_speed * charge_speed_multiplier
-		move_and_slide()
-		
-		if charge_timer >= charge_duration:
-			is_charging = false
-			charge_cooldown = 2.0
+	match charge_state:
+		ChargeState.IDLE:
 			velocity = Vector2.ZERO
-	else:
-		charge_cooldown -= delta
-		if charge_cooldown <= 0:
-			charge_wait_time -= delta
-			if charge_wait_time <= 0:
-				is_charging = true
+			charge_timer += delta
+			if charge_timer >= 1.0:
 				charge_timer = 0.0
-				charge_wait_time = 1.0
+				charge_state = ChargeState.CHARGING
+
+		ChargeState.CHARGING:
+			var direction := (player_ref.global_position - global_position).normalized()
+			velocity = direction * move_speed * charge_speed_multiplier
+			move_and_slide()
+			charge_timer += delta
+			if charge_timer >= charge_duration:
+				charge_timer = 0.0
+				charge_cooldown = 2.0
+				charge_state = ChargeState.COOLDOWN
+
+		ChargeState.COOLDOWN:
+			velocity = Vector2.ZERO
+			charge_timer += delta
+			if charge_timer >= charge_cooldown:
+				charge_timer = 0.0
+				charge_state = ChargeState.IDLE
 
 func _fire_projectile(direction: Vector2) -> void:
 	if projectile_scene == null:
 		return
-	
-	var projectile := projectile_scene.instantiate() as Projectile
-	if projectile == null:
-		return
-	
-	get_tree().current_scene.add_child(projectile)
-	projectile.global_position = global_position
-	projectile.velocity = direction * 200.0
-	projectile.owner = "enemy"
+
+	# Try to use PoolManager for projectile pooling
+	var pool_manager := get_tree().get_first_node_in_group("pool_manager")
+	if pool_manager != null and pool_manager.has_method("acquire"):
+		var projectile := pool_manager.acquire("projectile")
+		if projectile is Projectile:
+			projectile.global_position = global_position
+			projectile.owner = "enemy"
+			projectile.set_velocity(direction * 300.0)
+			if enemy_data != null:
+				projectile.set_damage(enemy_data.attack)
+	else:
+		# Fallback: instantiate directly
+		var projectile := projectile_scene.instantiate() as Projectile
+		if projectile != null:
+			get_tree().current_scene.add_child(projectile)
+			projectile.global_position = global_position
+			projectile.owner = "enemy"
+			projectile.set_velocity(direction * 300.0)
+			if enemy_data != null:
+				projectile.set_damage(enemy_data.attack)
 
 func take_damage(amount: int) -> void:
-	current_hp -= amount
+	if not is_alive:
+		return
+
+	var defense_value := enemy_data.defense if enemy_data != null else 0
+	var actual_damage := max(1, amount - defense_value)
+	current_hp -= actual_damage
+
 	if current_hp <= 0:
+		current_hp = 0
+		is_alive = false
 		_on_defeated()
-		queue_free()
+
 
 func _on_defeated() -> void:
-	# TODO: Spawn drop items from enemy_data.drop_table
-	pass
+	died.emit()
+	queue_free()
 
 
 func _find_player() -> Node2D:
