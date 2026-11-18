@@ -48,11 +48,17 @@ jobs:
         run: |
           mkdir -p vamsurlike_remake/.godot/editor
 
+      - name: Import project (initialize editor metadata)
+        run: |
+          ./Godot_v4.3-stable_linux.x86_64 --headless \
+            --path vamsurlike_remake \
+            --import \
+            --quit
+
       - name: Build Android APK (Debug)
         run: |
           ./Godot_v4.3-stable_linux.x86_64 --headless \
             --path vamsurlike_remake \
-            --verbose \
             --export-debug "Android" \
             build/android/vamsurlike_remake.apk
 
