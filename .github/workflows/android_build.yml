@@ -44,7 +44,8 @@ jobs:
 
       - name: Clean editor cache
         run: |
-          rm -rf vamsurlike_remake/.godot/editor/*
+          mkdir -p vamsurlike_remake/.godot/editor
+          rm -f vamsurlike_remake/.godot/editor/*
 
       - name: Build Android APK (Debug)
         run: |
