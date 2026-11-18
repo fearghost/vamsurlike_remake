@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       GODOT_ANDROID_KEYSTORE_DEBUG_PATH: vamsurlike_remake/keystore/debug.keystore
       GODOT_ANDROID_KEYSTORE_DEBUG_USER: androidDebugKey
       GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
@@ -49,15 +51,28 @@ jobs:
           echo "=== Verified export template files ==="
           ls -la ~/.local/share/godot/export_templates/4.3.stable/
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Dump Android SDK location
+      - name: Install Android SDK and NDK
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          ls -la $ANDROID_HOME 2>/dev/null || echo "ANDROID_HOME not set or empty"
-          ls -la $ANDROID_SDK_ROOT 2>/dev/null || echo "ANDROID_SDK_ROOT not set or empty"
+          mkdir -p $ANDROID_HOME/cmdline-tools
+          wget --tries=3 --timeout=120 -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          unzip -o cmdline-tools.zip -d /tmp/cmdline-tools
+          mv /tmp/cmdline-tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
+          
+          # Accept licenses
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1
+          
+          # Install required SDK components for Godot 4.3
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            "ndk;27.0.12077973" \
+            "platform-tools" > /dev/null 2>&1
+          
+          echo "=== Installed SDK components ==="
+          ls $ANDROID_HOME/platforms/
+          ls $ANDROID_HOME/build-tools/
+          ls $ANDROID_HOME/ndk/
+          echo "=== SDK path: $ANDROID_HOME ==="
 
       - name: Ensure .godot directory structure
         run: |
