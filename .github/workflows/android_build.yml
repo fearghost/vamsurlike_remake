@@ -101,12 +101,12 @@ jobs:
 
       - name: Build Android APK (Debug)
         run: |
-          mkdir -p build/android
+          mkdir -p vamsurlike_remake/build/android
           ./Godot_v4.3-stable_linux.x86_64 --headless \
             --path vamsurlike_remake \
             --verbose \
             --export-debug "Android" \
-            build/android/vamsurlike_remake.apk
+            vamsurlike_remake/build/android/vamsurlike_remake.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
