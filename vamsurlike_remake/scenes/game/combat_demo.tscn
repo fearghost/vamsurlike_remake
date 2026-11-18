@@ -1,0 +1,70 @@
+[gd_scene load_steps=4 format=2]
+
+[sub_resource type="ColorRect" id="ColorRect_1"]
+color = Color(0, 0.368627, 0.913725, 1)
+
+[sub_resource type="ColorRect" id="ColorRect_2"]
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="CombatDemo" type="Node2D"]
+script = "res://scripts/player/combat_demo.gd"
+
+[node name="Player" type="CharacterBody2D" parent="."]
+position = Vector2(640, 360)
+script = "res://scripts/player/player_controller.gd"
+
+[node name="AutoAttack" type="Node" parent="Player"]
+script = "res://scripts/player/auto_attack.gd"
+
+[node name="Body" type="ColorRect" parent="Player"]
+size = Vector2(32, 32)
+offset_left = -16.0
+offset_top = -16.0
+offset_right = 16.0
+offset_bottom = 16.0
+material = SubResource.load("ColorRect_1")
+
+[node name="AutoAttack" type="Node2D" parent="."]
+
+[node name="Spawner" type="Node2D" parent="."]
+wave_data = [
+	{
+		"wave_number": 1,
+		"enemies": ["chase_01", "chase_01"],
+		"spawn_interval": 2.0
+	},
+	{
+		"wave_number": 2,
+		"enemies": ["ranged_01", "chase_01", "charge_01"],
+		"spawn_interval": 1.5
+	},
+	{
+		"wave_number": 3,
+		"enemies": ["charge_01", "charge_01", "ranged_01", "ranged_01", "chase_01"],
+		"spawn_interval": 1.0
+	}
+]
+
+[node name="VirtualJoystick" type="Control" parent="."]
+position = Vector2(150, 550)
+size = Vector2(120, 120)
+script = "res://scenes/common/virtual_joystick.gd"
+
+[node name="PlayerHud" type="CanvasLayer" parent="."]
+script = "res://scripts/ui/player_hud.gd"
+
+[node name="HPBar" type="TextureProgressBar" parent="PlayerHud"]
+layout_mode = 1
+offset_top = 20.0
+offset_left = 20.0
+offset_right = 320.0
+offset_bottom = 50.0
+value = 100.0
+
+[node name="StageLabel" type="Label" parent="PlayerHud"]
+layout_mode = 1
+text = "Stage: 1"
+offset_top = 60.0
+offset_left = 20.0
+offset_right = 200.0
+offset_bottom = 90.0

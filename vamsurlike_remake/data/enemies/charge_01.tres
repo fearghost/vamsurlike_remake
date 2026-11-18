@@ -1,0 +1,10 @@
+[gd_resource type="Resource" format=3]
+
+[resource]
+enemy_id = "charge_01"
+enemy_name = "Charger"
+hp = 80
+attack = 12
+defense = 3
+speed = 120.0
+ai_pattern = "charge"

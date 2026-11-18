@@ -1,0 +1,10 @@
+[gd_resource type="Resource" format=3]
+
+[resource]
+enemy_id = "chase_01"
+enemy_name = "Chaser"
+hp = 50
+attack = 5
+defense = 2
+speed = 80.0
+ai_pattern = "chase"

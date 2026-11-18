@@ -1,0 +1,59 @@
+[gd_scene load_steps=3 format=2]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1"]
+
+[node name="MainMenu" type="CanvasLayer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = "res://scenes/ui/main_menu.gd"
+
+[node name="Background" type="ColorRect" parent="."]
+color = Color(0, 0, 0, 1)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture_filter = 1
+
+[node name="TitleLabel" type="Label" parent="."]
+layout_mode = 1
+theme_override_font_sizes/font_size = 48
+text = "Genesis 2 Remake"
+horizontal_alignment = 1
+vertical_alignment = 1
+offset_top = 150.0
+offset_left = 340.0
+offset_right = 940.0
+offset_bottom = 220.0
+
+[node name="StartButton" type="Button" parent="."]
+layout_mode = 1
+text = "Start"
+offset_top = 300.0
+offset_left = 540.0
+offset_right = 740.0
+offset_bottom = 350.0
+
+[node name="ContinueButton" type="Button" parent="."]
+layout_mode = 1
+text = "Continue"
+offset_top = 370.0
+offset_left = 540.0
+offset_right = 740.0
+offset_bottom = 420.0
+
+[node name="ExitButton" type="Button" parent="."]
+layout_mode = 1
+text = "Exit"
+offset_top = 440.0
+offset_left = 540.0
+offset_right = 740.0
+offset_bottom = 490.0
+
+[connection signal="pressed" method="_on_StartButton_pressed" owner="MainMenu"]
+[connection signal="pressed" method="_on_ContinueButton_pressed" owner="MainMenu"]
+[connection signal="pressed" method="_on_ExitButton_pressed" owner="MainMenu"]

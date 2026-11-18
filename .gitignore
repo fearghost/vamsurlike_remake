@@ -1,0 +1,13 @@
+# Godot
+*.import/
+*.godot
+*.tscn.import
+*.tres.import
+*.remap
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Save data (user://)
+save_data.json

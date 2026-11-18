@@ -1,0 +1,32 @@
+[
+  {
+    "action": "move",
+    "actor": "G.S",
+    "waypoints": [
+      [200, 300],
+      [400, 250]
+    ]
+  },
+  {
+    "action": "dialogue",
+    "speaker": "G.S",
+    "text": "이곳이 창세기전의 시작점이다."
+  },
+  {
+    "action": "move",
+    "actor": "Iolin",
+    "waypoints": [
+      [600, 350],
+      [500, 280]
+    ]
+  },
+  {
+    "action": "dialogue",
+    "speaker": "Iolin",
+    "text": "준비되었는가?"
+  },
+  {
+    "action": "transition",
+    "scene": "combat_demo.tscn"
+  }
+]

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" format=3]
+
+[resource]
+enemy_id = "ranged_01"
+enemy_name = "Ranger"
+hp = 30
+attack = 8
+defense = 1
+speed = 40.0
+ai_pattern = "ranged"

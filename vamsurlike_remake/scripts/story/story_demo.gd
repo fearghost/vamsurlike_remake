@@ -1,0 +1,28 @@
+## StoryDemo controller — sets up actors and connects them to the StoryDirector.
+extends Node2D
+
+
+@onready var story_director: StoryDirector = $StoryDirector
+@onready var actor1: Node2D = $Actor1
+@onready var actor2: Node2D = $Actor2
+@onready var dialogue_ui: DialogueUI = $DialogueUI
+
+
+func _ready() -> void:
+	# Register actors with the StoryDirector
+	story_director.actors = {
+		"G.S": actor1,
+		"Iolin": actor2,
+	}
+
+	# Connect dialogue signals to UI
+	story_director.dialogue_started.connect(dialogue_ui.show_dialogue)
+	story_director.dialogue_ended.connect(dialogue_ui.hide_dialogue)
+
+	# Connect sequence finished to scene transition
+	story_director.sequence_finished.connect(_on_sequence_finished)
+
+
+func _on_sequence_finished() -> void:
+	print("Story sequence finished. Transitioning to combat.")
+	get_tree().change_scene_to_file("res://scenes/game/combat_demo.tscn")
