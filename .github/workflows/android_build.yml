@@ -37,8 +37,6 @@ jobs:
 
       - name: Install Android export templates
         run: |
-          ./Godot_v4.3-stable_linux.x86_64 --headless --import --editor-data-path .godot_imports 2>&1 || true
-          # Download and install export templates manually
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_android_export_template.tpz -O templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/4.3.stable
           unzip -o templates.tpz -d ~/.local/share/godot/export_templates/4.3.stable
