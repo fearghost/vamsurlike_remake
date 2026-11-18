@@ -9,6 +9,7 @@ config_version=5
 config/name="Vamsurlike Remake"
 config/description="Godot 4.3 Soulslike survival game - Genesis 2 Remake"
 config/version="1.0.0"
+config/icon="res://icon.png"
 run/main_scene="res://scenes/ui/main_menu.tscn"
 config/features=PackedStringArray("Mobile", "PCK Embed")
 

@@ -86,12 +86,6 @@ jobs:
           ls $ANDROID_HOME/ndk/ 2>/dev/null || echo "No ndk"
           echo "=== SDK path: $ANDROID_HOME ==="
 
-      - name: Ensure .godot directory structure
-        run: |
-          mkdir -p vamsurlike_remake/.godot/editor
-          # Create export credentials for headless builds (with [preset.0.options] section)
-          echo 'W3ByZXNldC4wXQpbcHJlc2V0LjAub3B0aW9uc10Ka2V5c3RvcmUvZGVidWcva2V5c3RvcmU9InJlczovL2tleXN0b3JlL2RlYnVnLmtleXN0b3JlIgprZXlzdG9yZS9kZWJ1Zy9rZXlzdG9yZV9wYXNzd29yZD0iYW5kcm9pZCIKa2V5c3RvcmUvZGVidWcva2V5X2FsaWFzPSJhbmRyb2lkRGVidWdLZXkiCmtleXN0b3JlL2RlYnVnL2tleV9wYXNzd29yZD0iYW5kcm9pZCIK' | base64 -d > vamsurlike_remake/.godot/editor/export_credentials.cfg
-
       - name: Import project (initialize editor metadata)
         run: |
           ./Godot_v4.3-stable_linux.x86_64 --headless \
