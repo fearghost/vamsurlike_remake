@@ -12,6 +12,11 @@ jobs:
     name: Build Android APK
     runs-on: ubuntu-latest
 
+    env:
+      GODOT_ANDROID_KEYSTORE_DEBUG_PATH: vamsurlike_remake/keystore/debug.keystore
+      GODOT_ANDROID_KEYSTORE_DEBUG_USER: androidDebugKey
+      GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -44,11 +49,21 @@ jobs:
           echo "=== Verified export template files ==="
           ls -la ~/.local/share/godot/export_templates/4.3.stable/
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Dump Android SDK location
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls -la $ANDROID_HOME 2>/dev/null || echo "ANDROID_HOME not set or empty"
+          ls -la $ANDROID_SDK_ROOT 2>/dev/null || echo "ANDROID_SDK_ROOT not set or empty"
+
       - name: Ensure .godot directory structure
         run: |
           mkdir -p vamsurlike_remake/.godot/editor
-          # Create export credentials for headless builds (all keystore fields required)
-          echo 'W3ByZXNldC4wXQprZXlzdG9yZS9kZWJ1Zy9rZXlzdG9yZT0icmVzOi8va2V5c3RvcmUvZGVidWcua2V5c3RvcmUiCmtleXN0b3JlL2RlYnVnL2tleXN0b3JlX3Bhc3N3b3JkPSJhbmRyb2lkIgprZXlzdG9yZS9kZWJ1Zy9rZXlfYWxpYXM9ImFuZHJvaWREZWJ1Z0tleSIKa2V5c3RvcmUvZGVidWcva2V5X3Bhc3N3b3JkPSJhbmRyb2lkIgo=' | base64 -d > vamsurlike_remake/.godot/editor/export_credentials.cfg
+          # Create export credentials for headless builds (with [preset.0.options] section)
+          echo 'W3ByZXNldC4wXQpbcHJlc2V0LjAub3B0aW9uc10Ka2V5c3RvcmUvZGVidWcva2V5c3RvcmU9InJlczovL2tleXN0b3JlL2RlYnVnLmtleXN0b3JlIgprZXlzdG9yZS9kZWJ1Zy9rZXlzdG9yZV9wYXNzd29yZD0iYW5kcm9pZCIKa2V5c3RvcmUvZGVidWcva2V5X2FsaWFzPSJhbmRyb2lkRGVidWdLZXkiCmtleXN0b3JlL2RlYnVnL2tleV9wYXNzd29yZD0iYW5kcm9pZCIK' | base64 -d > vamsurlike_remake/.godot/editor/export_credentials.cfg
 
       - name: Import project (initialize editor metadata)
         run: |
@@ -59,6 +74,7 @@ jobs:
 
       - name: Build Android APK (Debug)
         run: |
+          mkdir -p build/android
           ./Godot_v4.3-stable_linux.x86_64 --headless \
             --path vamsurlike_remake \
             --verbose \

@@ -27,6 +27,10 @@ renderer/rendering_method.mobile="gl_compatibility"
 rendering/threads/thread_safety_enabled=true
 rendering/environment/default_environment="res://default_env.tres"
 
+[rendering/textures/vram_compression]
+
+import_etc2_astc=true
+
 [autoload]
 
 GameManager="*res://scripts/autoload/game_manager.gd"
