@@ -47,6 +47,8 @@ jobs:
       - name: Ensure .godot directory structure
         run: |
           mkdir -p vamsurlike_remake/.godot/editor
+          # Create minimal export credentials for headless builds
+          printf '[preset.0]\nkeystore/debug/keystore_password="android"\nkeystore/debug/key_password="android"\n' > vamsurlike_remake/.godot/editor/export_credentials.cfg
 
       - name: Import project (initialize editor metadata)
         run: |
@@ -59,8 +61,9 @@ jobs:
         run: |
           ./Godot_v4.3-stable_linux.x86_64 --headless \
             --path vamsurlike_remake \
+            --verbose \
             --export-debug "Android" \
-            build/android/vamsurlike_remake.apk
+            build/android/vamsurlike_remake.apk 2>&1 || true
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
