@@ -92,8 +92,8 @@ jobs:
       - name: Sign APK with apksigner
         run: |
           # Generate debug keystore for signing
-          KEYSTORE_PATH="$PROJECT_DIR/keystore/debug.keystore"
-          mkdir -p "$PROJECT_DIR/keystore"
+          KEYSTORE_PATH="vamsurlike_remake/keystore/debug.keystore"
+          mkdir -p vamsurlike_remake/keystore
           keytool -genkeypair \
             -alias androidDebugKey \
             -keyalg RSA \
@@ -112,12 +112,12 @@ jobs:
             --ks-key-alias androidDebugKey \
             --ks-pass pass:android \
             --key-pass pass:android \
-            --out "$PROJECT_DIR/build/android/vamsurlike_remake.apk" \
-            "$PROJECT_DIR/build/android/vamsurlike_remake.apk"
+            --out "vamsurlike_remake/build/android/vamsurlike_remake.apk" \
+            "vamsurlike_remake/build/android/vamsurlike_remake.apk"
           
           # Verify the signature
           echo "=== Verifying APK signature ==="
-          "$BUILD_TOOLS/apksigner" verify --verbose "$PROJECT_DIR/build/android/vamsurlike_remake.apk"
+          "$BUILD_TOOLS/apksigner" verify --verbose "vamsurlike_remake/build/android/vamsurlike_remake.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
