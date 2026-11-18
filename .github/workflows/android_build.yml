@@ -51,27 +51,39 @@ jobs:
           echo "=== Verified export template files ==="
           ls -la ~/.local/share/godot/export_templates/4.3.stable/
 
-      - name: Install Android SDK and NDK
+      - name: Setup Android SDK (use pre-installed or install fresh)
         run: |
-          mkdir -p $ANDROID_HOME/cmdline-tools
-          wget --tries=3 --timeout=120 -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
-          unzip -o cmdline-tools.zip -d /tmp/cmdline-tools
-          mv /tmp/cmdline-tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
+          CMDLINE_TOOLS="$ANDROID_HOME/cmdline-tools"
+          
+          if [ -f "$CMDLINE_TOOLS/latest/bin/sdkmanager" ]; then
+            echo "=== Using pre-installed cmdline-tools ==="
+          else
+            echo "=== Installing cmdline-tools ==="
+            mkdir -p $ANDROID_HOME/cmdline-tools
+            rm -rf /tmp/cmdline-tools
+            wget --tries=3 --timeout=120 -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+            unzip -o cmdline-tools.zip -d /tmp
+            mv /tmp/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+          fi
+          
+          SDKMGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          echo "=== sdkmanager path: $SDKMGR ==="
+          ls -la "$SDKMGR" 2>/dev/null || echo "sdkmanager not found!"
           
           # Accept licenses
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1
+          yes | "$SDKMGR" --licenses > /dev/null 2>&1 || true
           
           # Install required SDK components for Godot 4.3
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+          "$SDKMGR" \
             "platforms;android-34" \
             "build-tools;34.0.0" \
             "ndk;27.0.12077973" \
-            "platform-tools" > /dev/null 2>&1
+            "platform-tools" > /dev/null 2>&1 || true
           
           echo "=== Installed SDK components ==="
-          ls $ANDROID_HOME/platforms/
-          ls $ANDROID_HOME/build-tools/
-          ls $ANDROID_HOME/ndk/
+          ls $ANDROID_HOME/platforms/ 2>/dev/null || echo "No platforms"
+          ls $ANDROID_HOME/build-tools/ 2>/dev/null || echo "No build-tools"
+          ls $ANDROID_HOME/ndk/ 2>/dev/null || echo "No ndk"
           echo "=== SDK path: $ANDROID_HOME ==="
 
       - name: Ensure .godot directory structure
