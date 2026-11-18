@@ -37,9 +37,13 @@ jobs:
 
       - name: Install Android export templates
         run: |
-          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -O templates.tpz
+          wget --tries=3 --timeout=60 -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -O templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/4.3.stable
           unzip -o templates.tpz -d ~/.local/share/godot/export_templates/4.3.stable
+
+      - name: Clean editor cache
+        run: |
+          rm -rf vamsurlike_remake/.godot/editor/*
 
       - name: Build Android APK (Debug)
         run: |

@@ -53,3 +53,8 @@ func reset_game() -> void:
 		"speed": 200.0,
 	}
 	state_changed.emit(GameState.MAIN_MENU)
+
+
+## Returns a reference to the player base stats dictionary.
+func get_player_stats() -> Dictionary:
+	return player_base_stats

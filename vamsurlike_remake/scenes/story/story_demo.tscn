@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=1 format=2]
 
 [sub_resource type="ColorRect" id="ColorRect_1"]
 color = Color(0.5, 0.5, 0.5, 1)
@@ -7,7 +7,7 @@ color = Color(0.5, 0.5, 0.5, 1)
 script = "res://scripts/story/story_demo.gd"
 
 [node name="StoryDirector" type="Node2D" parent="."]
-script_file = "res://data/stages/story_demo.json"
+script = "res://scripts/story/story_director.gd"
 
 [node name="Actor1" type="Node2D" parent="."]
 position = Vector2(400, 360)

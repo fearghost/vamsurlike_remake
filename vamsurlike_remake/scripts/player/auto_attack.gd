@@ -79,8 +79,6 @@ func fire_projectile(target_position: Vector2) -> void:
 			projectile.global_position = parent.global_position
 			if projectile.has_method("set_velocity"):
 				projectile.set_velocity(direction * 400.0)
-			elif projectile is CharacterBody2D:
-				projectile.velocity = direction * 400.0
 			if projectile.has_method("set_damage"):
 				projectile.set_damage(attack_damage)
 	else:

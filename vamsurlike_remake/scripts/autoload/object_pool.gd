@@ -2,6 +2,9 @@
 class_name ObjectPool
 extends Node
 
+## The underlying storage for pooled objects.
+var pool: Array = []
+
 ## The PackedScene template used to instantiate new objects when the pool is empty.
 var template: PackedScene
 
