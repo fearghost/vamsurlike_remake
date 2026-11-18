@@ -7,6 +7,7 @@ extends Node2D
 signal sequence_finished
 signal dialogue_started(text: String, speaker: String)
 signal dialogue_ended
+signal dialogue_completed
 signal actor_moved(actor_name: String, target_pos: Vector2)
 
 @export var actors: Dictionary = {}
@@ -131,7 +132,12 @@ func _execute_transition(step: Dictionary) -> void:
 		_on_step_completed()
 		return
 
-	SceneTransition.transition_to_combat()
+	# Build full path if only filename was given
+	var full_path := target_scene
+	if not full_path.begins_with("res://"):
+		full_path = "res://scenes/game/%s" % target_scene
+
+	SceneTransition.transition_to_scene(full_path)
 
 
 func _on_step_completed() -> void:

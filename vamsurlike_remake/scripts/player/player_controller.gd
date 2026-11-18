@@ -25,6 +25,13 @@ func _ready() -> void:
 		dummy.position = Vector2(-16, -16)
 		add_child(dummy)
 
+	# Add collision shape for Area2D projectile detection
+	var collision := CollisionShape2D.new()
+	var shape := CircleShape2D.new()
+	shape.radius = 18.0
+	collision.shape = shape
+	add_child(collision)
+
 	# Create a default PlayerStats node if none is assigned
 	if player_stats == null:
 		player_stats = $PlayerStats if has_node("PlayerStats") else null

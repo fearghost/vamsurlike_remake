@@ -22,6 +22,7 @@ var charge_state: int = ChargeState.IDLE
 var charge_timer: float = 0.0
 const CHARGE_DURATION: float = 0.5
 const CHARGE_COOLDOWN: float = 2.0
+const CHARGE_SPEED_MULTIPLIER: float = 3.0
 
 # Combat state
 var current_hp: int = 50
@@ -116,18 +117,17 @@ func _ai_charge(delta: float) -> void:
 
 		ChargeState.CHARGING:
 			var direction := (player_ref.global_position - global_position).normalized()
-			velocity = direction * move_speed * charge_speed_multiplier
+			velocity = direction * move_speed * CHARGE_SPEED_MULTIPLIER
 			move_and_slide()
 			charge_timer += delta
-			if charge_timer >= charge_duration:
+			if charge_timer >= CHARGE_DURATION:
 				charge_timer = 0.0
-				charge_cooldown = 2.0
 				charge_state = ChargeState.COOLDOWN
 
 		ChargeState.COOLDOWN:
 			velocity = Vector2.ZERO
 			charge_timer += delta
-			if charge_timer >= charge_cooldown:
+			if charge_timer >= CHARGE_COOLDOWN:
 				charge_timer = 0.0
 				charge_state = ChargeState.IDLE
 

@@ -39,6 +39,17 @@ func load() -> void:
 		if parse_result is Dictionary:
 			save_data = parse_result
 
+			# Apply loaded stage to GameManager
+			if GameManager != null and save_data.has("current_stage"):
+				GameManager.current_stage_id = save_data["current_stage"]
+
+			# Apply loaded player stats if available
+			if GameManager != null and save_data.has("player_stats"):
+				var stats := save_data["player_stats"] as Dictionary
+				if stats.has("hp") and stats.has("max_hp"):
+					GameManager.player_base_stats["hp"] = stats["hp"]
+					GameManager.player_base_stats["max_hp"] = stats["max_hp"]
+
 
 ## Removes the save file and resets [param save_data] to its default state.
 func clear_save() -> void:

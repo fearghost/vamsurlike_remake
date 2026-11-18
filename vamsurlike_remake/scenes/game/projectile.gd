@@ -43,11 +43,13 @@ func _on_body_entered(body: Node) -> void:
 	if owner == "player" and body is EnemyAI:
 		body.take_damage(damage)
 		_on_destroyed()
-	elif owner == "enemy" and body.has_node("PlayerStats"):
-		var stats := body.get_node("PlayerStats")
-		if stats is PlayerStats:
-			stats.take_damage(damage)
-		_on_destroyed()
+	elif owner == "enemy":
+		# Check if body is the player via group membership
+		if body.is_in_group("player"):
+			var stats := body.get_node_or_null("PlayerStats")
+			if stats is PlayerStats:
+				stats.take_damage(damage)
+			_on_destroyed()
 
 
 func _on_destroyed() -> void:

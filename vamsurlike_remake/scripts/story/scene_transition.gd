@@ -5,16 +5,28 @@ extends Node
 ## and loading the target scene file.
 
 
-func transition_to_combat() -> void:
+static func transition_to_combat() -> void:
 	GameManager.change_state(GameManager.GameState.COMBAT)
-	get_tree().change_scene_to_file("res://scenes/game/combat_demo.tscn")
+	var tree := Engine.get_main_loop()
+	if tree != null:
+		tree.change_scene_to_file("res://scenes/game/combat_demo.tscn")
 
 
-func transition_to_upgrade() -> void:
+static func transition_to_upgrade() -> void:
 	GameManager.change_state(GameManager.GameState.UPGRADE)
-	get_tree().change_scene_to_file("res://scenes/game/upgrade_screen.tscn")
+	var tree := Engine.get_main_loop()
+	if tree != null:
+		tree.change_scene_to_file("res://scenes/game/upgrade_screen.tscn")
 
 
-func transition_to_main_menu() -> void:
+static func transition_to_main_menu() -> void:
 	GameManager.change_state(GameManager.GameState.MAIN_MENU)
-	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
+	var tree := Engine.get_main_loop()
+	if tree != null:
+		tree.change_scene_to_file("res://scenes/ui/main_menu.tscn")
+
+
+static func transition_to_scene(scene_path: String) -> void:
+	var tree := Engine.get_main_loop()
+	if tree != null and tree.has_method("change_scene_to_file"):
+		tree.change_scene_to_file(scene_path)

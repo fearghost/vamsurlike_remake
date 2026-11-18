@@ -16,6 +16,8 @@ signal died
 
 
 func _ready() -> void:
+	add_to_group("player_stats")
+
 	# Clamp initial values
 	current_hp = clampi(current_hp, 0, max_hp)
 	hp_changed.emit(current_hp, max_hp)

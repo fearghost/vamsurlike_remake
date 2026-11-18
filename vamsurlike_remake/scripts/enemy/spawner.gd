@@ -42,6 +42,12 @@ func start_wave(wave_index: int) -> void:
 
 	_spawn_next_enemy(wave)
 
+	# Start the spawn timer for subsequent enemies in this wave
+	if not wave["enemies"].is_empty():
+		var spawn_interval := wave.get("spawn_interval", 1.0) as float
+		spawn_timer.wait_time = spawn_interval
+		spawn_timer.start()
+
 
 func _spawn_next_enemy(wave: Dictionary) -> void:
 	if not is_waving_active or wave["enemies"].is_empty():

@@ -18,6 +18,10 @@ func _ready() -> void:
 	if virtual_joystick != null and player != null:
 		virtual_joystick.value_changed.connect(player.set_input_direction)
 
+	# Start auto-attack on the player
+	if player != null:
+		player.start_auto_attack()
+
 	# Start first wave after a short delay
 	if spawner != null:
 		spawner.start_wave(0)
@@ -34,9 +38,28 @@ func _ready() -> void:
 	if spawner != null:
 		spawner.all_waves_cleared.connect(_on_all_waves_cleared)
 
+	# Connect player death to main menu return
+	if player != null and player.player_stats != null:
+		player.player_stats.died.connect(_on_player_died)
+
+
+func _on_player_died() -> void:
+	print("Player died. Returning to main menu.")
+	SaveManager.save_data["current_stage"] = GameManager.current_stage_id
+	SaveManager.save()
+	await get_tree().create_timer(2.0).timeout
+	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
+
 
 func _on_all_waves_cleared() -> void:
 	print("All waves cleared! Transitioning to upgrade screen.")
+
+	# Save cleared stage progress
+	SaveManager.save_data["current_stage"] = GameManager.current_stage_id
+	if not SaveManager.save_data["cleared_stages"].has(GameManager.current_stage_id):
+		SaveManager.save_data["cleared_stages"].append(GameManager.current_stage_id)
+	SaveManager.save()
+
 	# For now, transition back to main menu
 	await get_tree().create_timer(2.0).timeout
 	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
