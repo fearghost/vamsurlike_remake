@@ -70,21 +70,6 @@ jobs:
           ls $ANDROID_HOME/ndk/ 2>/dev/null || echo "No ndk"
           echo "=== SDK path: $ANDROID_HOME ==="
 
-      - name: Generate debug keystore for Godot export
-        run: |
-          mkdir -p vamsurlike_remake/keystore
-          keytool -genkeypair \
-            -alias androidDebugKey \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -keystore vamsurlike_remake/keystore/debug.keystore \
-            -storepass android \
-            -keypass android \
-            -dname "CN=Android Debug,O=Android,C=US"
-          echo "=== Keystore generated ==="
-          keytool -list -v -keystore vamsurlike_remake/keystore/debug.keystore -storepass android 2>&1 | head -20
-
       - name: Import project (initialize editor metadata)
         run: |
           ./Godot_v4.3-stable_linux.x86_64 --headless \
@@ -93,10 +78,6 @@ jobs:
             --quit
 
       - name: Build Android APK (Debug)
-        env:
-          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: vamsurlike_remake/keystore/debug.keystore
-          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androidDebugKey
-          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
           PROJECT_DIR="$(pwd)/vamsurlike_remake"
           mkdir -p "$PROJECT_DIR/build/android"
@@ -107,6 +88,36 @@ jobs:
             --verbose \
             --export-debug "Android" \
             "$PROJECT_DIR/build/android/vamsurlike_remake.apk"
+
+      - name: Sign APK with apksigner
+        run: |
+          # Generate debug keystore for signing
+          KEYSTORE_PATH="$PROJECT_DIR/keystore/debug.keystore"
+          mkdir -p "$PROJECT_DIR/keystore"
+          keytool -genkeypair \
+            -alias androidDebugKey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -keystore "$KEYSTORE_PATH" \
+            -storepass android \
+            -keypass android \
+            -dname "CN=Android Debug,O=Android,C=US"
+          
+          # Sign the APK using apksigner from build-tools
+          BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/*/  | sort -V | tail -1)
+          echo "=== Using build-tools: $BUILD_TOOLS ==="
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks "$KEYSTORE_PATH" \
+            --ks-key-alias androidDebugKey \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out "$PROJECT_DIR/build/android/vamsurlike_remake.apk" \
+            "$PROJECT_DIR/build/android/vamsurlike_remake.apk"
+          
+          # Verify the signature
+          echo "=== Verifying APK signature ==="
+          "$BUILD_TOOLS/apksigner" verify --verbose "$PROJECT_DIR/build/android/vamsurlike_remake.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
