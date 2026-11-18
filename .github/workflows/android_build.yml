@@ -41,16 +41,18 @@ jobs:
           mkdir -p ~/.local/share/godot/export_templates/4.3.stable
           unzip -o templates.tpz -d /tmp/godot_templates
           find /tmp/godot_templates/templates -type f -exec mv {} ~/.local/share/godot/export_templates/4.3.stable/ \;
+          echo "=== Verified export template files ==="
+          ls -la ~/.local/share/godot/export_templates/4.3.stable/
 
-      - name: Clean editor cache
+      - name: Ensure .godot directory structure
         run: |
           mkdir -p vamsurlike_remake/.godot/editor
-          rm -f vamsurlike_remake/.godot/editor/*
 
       - name: Build Android APK (Debug)
         run: |
           ./Godot_v4.3-stable_linux.x86_64 --headless \
             --path vamsurlike_remake \
+            --verbose \
             --export-debug "Android" \
             build/android/vamsurlike_remake.apk
 
