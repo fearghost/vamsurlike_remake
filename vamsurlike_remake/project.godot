@@ -1,0 +1,55 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; but it can also be edited manually if you know the format.
+
+config_version=5
+
+[application]
+
+config/name="Vamsurlike Remake"
+config/description="Godot 4.3 Soulslike survival game - Genesis 2 Remake"
+config/version="1.0.0"
+run/main_scene="res://scenes/ui/main_menu.tscn"
+config/features=PackedStringArray("Mobile", "PCK Embed")
+
+[display]
+
+window/size/width=1280
+window/size/height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+window/stretch/expand=false
+
+[rendering]
+
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="gl_compatibility"
+rendering/threads/thread_safety_enabled=true
+rendering/environment/default_environment="res://default_env.tres"
+
+[autoload]
+
+GameManager="*res://scripts/autoload/game_manager.gd"
+SaveManager="*res://scripts/autoload/save_manager.gd"
+PoolManager="*res://scripts/autoload/pool_manager.gd"
+SoundManager="*res://scripts/autoload/sound_manager.gd"
+SceneTransition="*res://scripts/story/scene_transition.gd"
+
+[input]
+
+move_left={
+"deadzone": 0.5,
+"events":[  ]
+}
+move_right={
+"deadzone": 0.5,
+"events":[  ]
+}
+move_up={
+"deadzone": 0.5,
+"events":[  ]
+}
+move_down={
+"deadzone": 0.5,
+"events":[  ]
+}

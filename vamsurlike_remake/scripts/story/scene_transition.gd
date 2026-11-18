@@ -11,7 +11,7 @@ static func transition_to_combat() -> void:
 	var root: Node = tree.get_root()
 	var gm_node: Node = root.get_node_or_null("GameManager")
 	if gm_node != null and gm_node.has_method("change_state"):
-		gm_node.change_state(gm_node.GameState.COMBAT)
+		gm_node.change_state(GameManager.GameState.COMBAT)
 	tree.change_scene_to_file("res://scenes/game/combat_demo.tscn")
 
 
@@ -21,7 +21,7 @@ static func transition_to_upgrade() -> void:
 	var root: Node = tree.get_root()
 	var gm_node: Node = root.get_node_or_null("GameManager")
 	if gm_node != null and gm_node.has_method("change_state"):
-		gm_node.change_state(gm_node.GameState.UPGRADE)
+		gm_node.change_state(GameManager.GameState.UPGRADE)
 	tree.change_scene_to_file("res://scenes/game/upgrade_screen.tscn")
 
 

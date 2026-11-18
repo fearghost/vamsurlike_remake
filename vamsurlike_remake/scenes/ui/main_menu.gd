@@ -8,17 +8,15 @@ extends CanvasLayer
 
 
 func _ready() -> void:
-	start_button.pressed.connect(_on_start_pressed)
-	continue_button.pressed.connect(_on_continue_pressed)
-	exit_button.pressed.connect(_on_exit_pressed)
+	pass
 
 
-func _on_start_pressed() -> void:
+func _on_StartButton_pressed() -> void:
 	print("Starting story demo...")
 	transition_to_scene("res://scenes/story/story_demo.tscn")
 
 
-func _on_continue_pressed() -> void:
+func _on_ContinueButton_pressed() -> void:
 	print("Continuing from last save...")
 	var sm := get_node_or_null("/root/SaveManager")
 	if sm != null and sm.save_data.has("current_stage"):
@@ -28,7 +26,7 @@ func _on_continue_pressed() -> void:
 	transition_to_scene("res://scenes/game/combat_demo.tscn")
 
 
-func _on_exit_pressed() -> void:
+func _on_ExitButton_pressed() -> void:
 	get_tree().quit()
 
 
