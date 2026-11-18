@@ -138,23 +138,25 @@ func _fire_projectile(direction: Vector2) -> void:
 	# Try to use PoolManager for projectile pooling
 	var pool_manager := get_tree().get_first_node_in_group("pool_manager")
 	if pool_manager != null and pool_manager.has_method("acquire"):
-		var projectile := pool_manager.acquire("projectile")
-		if projectile is Projectile:
+		var projectile: Projectile = pool_manager.acquire("projectile") as Projectile
+		if projectile != null:
 			projectile.global_position = global_position
-			projectile.owner = "enemy"
+			projectile.source_type = "enemy"
 			projectile.set_velocity(direction * 300.0)
 			if enemy_data != null:
 				projectile.set_damage(enemy_data.attack)
 	else:
 		# Fallback: instantiate directly
-		var projectile := projectile_scene.instantiate() as Projectile
-		if projectile != null:
-			get_tree().current_scene.add_child(projectile)
-			projectile.global_position = global_position
-			projectile.owner = "enemy"
-			projectile.set_velocity(direction * 300.0)
-			if enemy_data != null:
-				projectile.set_damage(enemy_data.attack)
+		var projectile_scene := preload("res://scenes/game/projectile.tscn") as PackedScene
+		if projectile_scene != null:
+			var projectile: Projectile = projectile_scene.instantiate() as Projectile
+			if projectile != null:
+				get_tree().get_current_scene().add_child(projectile)
+				projectile.global_position = global_position
+				projectile.source_type = "enemy"
+				projectile.set_velocity(direction * 300.0)
+				if enemy_data != null:
+					projectile.set_damage(enemy_data.attack)
 
 func take_damage(amount: int) -> void:
 	if not is_alive:

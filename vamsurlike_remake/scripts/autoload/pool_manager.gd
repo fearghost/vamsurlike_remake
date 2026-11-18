@@ -1,7 +1,3 @@
-class_name ObjectPool
-extends Node
-
-
 ## Reusable pool of inactive objects.
 var pool: Array = []
 
@@ -85,9 +81,9 @@ var pools: Dictionary = {}
 ## Registers a new named object pool with [param template] and pre-allocates
 ## [param size] inactive instances.
 func register_pool(name: String, template: PackedScene, size: int) -> void:
-	var pool := ObjectPool.new()
-	pool.init(template, size)
-	pools[name] = pool
+	var p := ObjectPool.new()
+	p.init(template, size)
+	pools[name] = p
 
 
 ## Acquires (borrows) an object from the named pool.

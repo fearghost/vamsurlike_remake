@@ -44,7 +44,11 @@ func find_nearest_enemy() -> Node2D:
 	if parent == null:
 		return null
 
-	var parent_pos := parent.global_position if parent is Node2D else global_position
+	var parent_pos: Vector2
+	if parent is Node2D:
+		parent_pos = (parent as Node2D).global_position
+	else:
+		parent_pos = global_position
 	var closest: Node2D = null
 	var closest_dist_sq: float = attack_range * attack_range
 

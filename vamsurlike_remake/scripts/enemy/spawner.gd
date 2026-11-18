@@ -107,7 +107,7 @@ func spawn_enemy(enemy_data: EnemyData, position: Vector2) -> void:
 	# Connect enemy death signal to track remaining enemies
 	enemy.died.connect(_on_enemy_died)
 
-	get_tree().current_scene.add_child(enemy)
+	get_tree().get_current_scene().add_child(enemy)
 
 
 func _on_spawn_timer_timeout() -> void:
@@ -143,5 +143,5 @@ func _on_wave_delay_timeout() -> void:
 	start_wave(current_wave + 1)
 
 
-func all_waves_cleared() -> bool:
+func is_all_waves_cleared() -> bool:
 	return not is_waving_active and current_wave >= wave_data.size()

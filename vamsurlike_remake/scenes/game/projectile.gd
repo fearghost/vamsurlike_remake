@@ -8,7 +8,7 @@ extends Area2D
 
 @export var damage: int = 10
 @export var speed: float = 400.0
-@export var owner: String = "player"  # "player" or "enemy"
+@export var source_type: String = "player"  # "player" or "enemy"
 
 var velocity: Vector2 = Vector2.ZERO
 

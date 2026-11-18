@@ -1,70 +1,66 @@
+## SaveManager handles persistent game data using JSON serialization.
+## Saves to user://save_data.json for cross-session persistence.
 class_name SaveManager
 extends Node
 
-
-## File path for the persistent save data (user:// is Godot's portable user dir).
-const SAVE_PATH: String = "user://save_data.json"
-
-
-## The current in-memory save data dictionary.
 var save_data: Dictionary = {
-	"current_stage": 1,
+	"current_stage": 0,
 	"cleared_stages": [],
 	"player_stats": {},
-	"equipment": {},
-	"skill_tree": {},
 }
 
 
-## Serializes [param save_data] to JSON and writes it to [param SAVE_PATH].
-func save() -> void:
-	var json_string: String = JSON.stringify(save_data)
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if file != null:
-		file.store_string(json_string)
-		file.close()
+func _ready() -> void:
+	load_data()
 
 
-## Reads the save file from [param SAVE_PATH], parses JSON, and populates [param save_data].
-func load() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
+## Loads saved data from user://save_data.json
+func load_data() -> void:
+	var path := "user://save_data.json"
+	if not FileAccess.file_exists(path):
+		print("SaveManager: No save file found, creating new save.")
+		save()
 		return
 
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if file != null:
-		var json_string: String = file.get_as_text()
-		file.close()
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		push_error("SaveManager: Failed to open save file at %s" % path)
+		return
 
-		var parse_result: Variant = JSON.parse_string(json_string)
-		if parse_result is Dictionary:
-			save_data = parse_result
+	var json_string := file.get_as_text()
+	file.close()
 
-			# Apply loaded stage to GameManager
-			if GameManager != null and save_data.has("current_stage"):
-				GameManager.current_stage_id = save_data["current_stage"]
-
-			# Apply loaded player stats if available
-			if GameManager != null and save_data.has("player_stats"):
-				var stats := save_data["player_stats"] as Dictionary
-				if stats.has("hp") and stats.has("max_hp"):
-					GameManager.player_base_stats["hp"] = stats["hp"]
-					GameManager.player_base_stats["max_hp"] = stats["max_hp"]
+	var parsed = JSON.parse_string(json_string)
+	if parsed != null and parsed is Dictionary:
+		save_data = parsed as Dictionary
+		print("SaveManager: Data loaded successfully.")
+	else:
+		push_error("SaveManager: Failed to parse save data.")
 
 
-## Removes the save file and resets [param save_data] to its default state.
-func clear_save() -> void:
-	if FileAccess.file_exists(SAVE_PATH):
-		FileAccess.remove(SAVE_PATH)
+## Saves current data to user://save_data.json
+func save() -> void:
+	var path := "user://save_data.json"
+	var json_string := JSON.stringify(save_data)
 
-	save_data = {
-		"current_stage": 1,
-		"cleared_stages": [],
-		"player_stats": {},
-		"equipment": {},
-		"skill_tree": {},
-	}
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		push_error("SaveManager: Failed to open save file for writing at %s" % path)
+		return
+
+	file.store_string(json_string)
+	file.close()
+	print("SaveManager: Data saved successfully.")
 
 
-## Returns true if a save file exists at [param SAVE_PATH].
-func has_save() -> bool:
-	return FileAccess.file_exists(SAVE_PATH)
+## Updates the current stage ID from GameManager
+func update_stage_from_game_manager(stage_id: int) -> void:
+	save_data["current_stage"] = stage_id
+	save()
+
+
+## Gets the player base stats from GameManager
+func get_player_stats() -> Dictionary:
+	if save_data.has("player_stats"):
+		return save_data["player_stats"]
+	return {}

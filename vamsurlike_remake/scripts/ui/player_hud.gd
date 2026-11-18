@@ -17,14 +17,19 @@ func _ready() -> void:
 		player_stats.died.connect(_on_player_died)
 
 	# Connect to GameManager for stage updates
-	if GameManager != null:
-		GameManager.state_changed.connect(_on_game_state_changed)
-		update_stage(GameManager.current_stage_id)
+	var gm := get_node_or_null("/root/GameManager")
+	if gm != null:
+		if gm.has_signal("state_changed"):
+			gm.state_changed.connect(_on_game_state_changed)
+		if gm.has_property("current_stage_id"):
+			update_stage(gm.current_stage_id)
 
 
 func _on_game_state_changed(new_state: int) -> void:
-	if new_state == GameManager.GameState.COMBAT:
-		update_stage(GameManager.current_stage_id)
+	var gm := get_node_or_null("/root/GameManager")
+	if gm != null and gm.has_property("current_stage_id"):
+		if new_state == 2:  # COMBAT
+			update_stage(gm.current_stage_id)
 
 
 func _find_player_stats() -> Node:

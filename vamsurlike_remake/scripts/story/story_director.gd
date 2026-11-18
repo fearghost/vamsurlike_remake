@@ -38,7 +38,7 @@ func parse_script(file_path: String) -> Array[Dictionary]:
 	var json_string := file.get_as_text()
 	file.close()
 
-	var parsed = JSON.parse_string(json_string)
+	var parsed: Variant = JSON.parse_string(json_string)
 	if parsed == null:
 		push_error("StoryDirector: Failed to parse JSON from %s" % file_path)
 		return []
@@ -58,7 +58,7 @@ func execute_next_step() -> void:
 		return
 
 	var step := current_sequence[sequence_index]
-	var action := step.get("action", "")
+	var action: String = step.get("action", "")
 
 	match action:
 		"move":
@@ -73,7 +73,7 @@ func execute_next_step() -> void:
 
 
 func _execute_move(step: Dictionary) -> void:
-	var actor_name := step.get("actor", "")
+	var actor_name: String = step.get("actor", "")
 	var waypoints_raw := step.get("waypoints", [])
 
 	if not actors.has(actor_name):

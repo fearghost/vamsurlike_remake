@@ -6,21 +6,27 @@ extends Node
 
 
 static func transition_to_combat() -> void:
-	GameManager.change_state(GameManager.GameState.COMBAT)
+	var gm := get_node_or_null("/root/GameManager")
+	if gm != null and gm.has_method("change_state"):
+		gm.change_state(gm.GameState.COMBAT)
 	var tree := Engine.get_main_loop()
 	if tree != null:
 		tree.change_scene_to_file("res://scenes/game/combat_demo.tscn")
 
 
 static func transition_to_upgrade() -> void:
-	GameManager.change_state(GameManager.GameState.UPGRADE)
+	var gm := get_node_or_null("/root/GameManager")
+	if gm != null and gm.has_method("change_state"):
+		gm.change_state(gm.GameState.UPGRADE)
 	var tree := Engine.get_main_loop()
 	if tree != null:
 		tree.change_scene_to_file("res://scenes/game/upgrade_screen.tscn")
 
 
 static func transition_to_main_menu() -> void:
-	GameManager.change_state(GameManager.GameState.MAIN_MENU)
+	var gm := get_node_or_null("/root/GameManager")
+	if gm != null and gm.has_method("change_state"):
+		gm.change_state(gm.GameState.MAIN_MENU)
 	var tree := Engine.get_main_loop()
 	if tree != null:
 		tree.change_scene_to_file("res://scenes/ui/main_menu.tscn")

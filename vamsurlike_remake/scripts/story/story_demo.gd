@@ -2,10 +2,10 @@
 extends Node2D
 
 
-@onready var story_director: StoryDirector = $StoryDirector
+@onready var story_director: StoryDirector = $StoryDirector as StoryDirector
 @onready var actor1: Node2D = $Actor1
 @onready var actor2: Node2D = $Actor2
-@onready var dialogue_ui: DialogueUI = $DialogueUI
+@onready var dialogue_ui: Node = $DialogueUI as Node
 
 
 func _ready() -> void:

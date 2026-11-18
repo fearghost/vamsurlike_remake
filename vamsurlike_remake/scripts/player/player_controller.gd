@@ -36,18 +36,10 @@ func _ready() -> void:
 	# Create a default PlayerStats node if none is assigned
 	if player_stats == null:
 		player_stats = $PlayerStats if has_node("PlayerStats") else null
-		if player_stats == null:
-			player_stats = preload("res://scripts/player/player_stats.gd").new()
-			player_stats.name = "PlayerStats"
-			add_child(player_stats)
 
 	# Create default AutoAttack if none is assigned
 	if auto_attack == null:
 		auto_attack = $AutoAttack if has_node("AutoAttack") else null
-		if auto_attack == null:
-			auto_attack = preload("res://scripts/player/auto_attack.gd").new()
-			auto_attack.name = "AutoAttack"
-			add_child(auto_attack)
 
 
 func _process(delta: float) -> void:

@@ -64,7 +64,7 @@ func get_direction() -> Vector2:
 	if not is_active:
 		return Vector2.ZERO
 	var delta: Vector2 = stick_position - base_position
-	return (delta / max_radius).clamped(Vector2.ONE)
+	return (delta / max_radius).limit_length(1.0)
 
 
 func _process(_delta: float) -> void:
