@@ -18,8 +18,9 @@ jobs:
 
       - name: Download Godot 4.3 CLI
         run: |
-          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64 -O godot
-          chmod +x godot
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip -O godot.zip
+          unzip -o godot.zip
+          chmod +x Godot
 
       - name: Generate debug keystore
         run: |
@@ -36,7 +37,7 @@ jobs:
 
       - name: Build Android APK (Debug)
         run: |
-          ./godot --headless \
+          ./Godot --headless \
             --path vamsurlike_remake \
             --export-debug "Android" \
             build/android/vamsurlike_remake.apk
