@@ -31,6 +31,4 @@ func _on_ExitButton_pressed() -> void:
 
 
 func transition_to_scene(scene_path: String) -> void:
-	var tree := Engine.get_main_loop()
-	if tree != null and tree.has_method("change_scene_to_file"):
-		tree.change_scene_to_file(scene_path)
+	get_tree().change_scene_to_file(scene_path)

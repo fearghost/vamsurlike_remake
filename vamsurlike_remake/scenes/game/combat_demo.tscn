@@ -44,7 +44,6 @@ wave_data = [
 ]
 
 [node name="VirtualJoystick" type="Control" parent="."]
-position = Vector2(150, 550)
 size = Vector2(120, 120)
 script = "res://scenes/common/virtual_joystick.gd"
 

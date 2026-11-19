@@ -20,17 +20,21 @@ var touch_id: int = -1
 
 
 func _ready() -> void:
-	# Position the base center in the lower-left quadrant by default
-	base_position = Vector2(150.0, 600.0)
+	# Position joystick in the lower-left area of the screen (150, 550)
+	position = Vector2(150.0, 550.0)
+	# Base center is at local offset (60, 60) → screen (210, 610)
+	base_position = Vector2(60.0, 60.0)
 	stick_position = base_position
 	queue_redraw()
+	grab_focus()
 
 
-func _unhandled_input(event: InputEvent) -> void:
+func gui_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		if event.pressed and touch_id == -1:
 			# Only activate if touch is in the lower half of the screen
-			if event.position.y > position.y + size.y * 0.4:
+			var local_pos := event.position - position
+			if local_pos.y > size.y * 0.4:
 				touch_id = event.index
 				is_active = true
 				base_position = event.position

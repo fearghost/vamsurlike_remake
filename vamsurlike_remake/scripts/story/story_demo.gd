@@ -17,7 +17,7 @@ func _ready() -> void:
 
 	# Connect dialogue signals to UI
 	story_director.dialogue_started.connect(dialogue_ui.show_dialogue)
-	dialogue_ui.dialogue_completed.connect(story_director.emit_signal.bind("dialogue_completed"))
+	dialogue_ui.dialogue_completed.connect(func(): story_director.dialogue_completed.emit())
 
 	# Connect sequence finished to scene transition
 	story_director.sequence_finished.connect(_on_sequence_finished)
