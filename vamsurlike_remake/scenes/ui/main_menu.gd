@@ -2,11 +2,6 @@
 extends CanvasLayer
 
 
-@onready var start_button: Button = $StartButton
-@onready var continue_button: Button = $ContinueButton
-@onready var exit_button: Button = $ExitButton
-
-
 func _ready() -> void:
 	pass
 
