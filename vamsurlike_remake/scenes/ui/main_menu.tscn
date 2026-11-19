@@ -1,6 +1,5 @@
 [gd_scene load_steps=2 format=2]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1"]
 
 [node name="MainMenu" type="CanvasLayer" parent="."]
 anchors_preset = 15

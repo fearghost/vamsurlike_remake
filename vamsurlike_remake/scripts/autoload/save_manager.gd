@@ -10,6 +10,12 @@ var save_data: Dictionary = {
 
 
 func _ready() -> void:
+	## Defer filesystem access until the scene tree is fully initialized.
+	## On mobile (Android), user:// path may not be ready during autoload _ready.
+	call_deferred("_load_data_safe")
+
+
+func _load_data_safe() -> void:
 	load_data()
 
 
@@ -18,7 +24,7 @@ func load_data() -> void:
 	var path := "user://save_data.json"
 	if not FileAccess.file_exists(path):
 		print("SaveManager: No save file found, creating new save.")
-		save()
+		_save_data_safe()
 		return
 
 	var file := FileAccess.open(path, FileAccess.READ)
@@ -35,6 +41,10 @@ func load_data() -> void:
 		print("SaveManager: Data loaded successfully.")
 	else:
 		push_error("SaveManager: Failed to parse save data.")
+
+
+func _save_data_safe() -> void:
+	save()
 
 
 ## Saves current data to user://save_data.json
