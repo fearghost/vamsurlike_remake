@@ -21,7 +21,6 @@ texture_filter = 1
 
 [node name="TitleLabel" type="Label" parent="."]
 layout_mode = 1
-theme_override_font_sizes/font_size = 48
 text = "Genesis 2 Remake"
 horizontal_alignment = 1
 vertical_alignment = 1
