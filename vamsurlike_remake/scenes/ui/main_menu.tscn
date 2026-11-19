@@ -2,7 +2,7 @@
 
 
 [node name="MainMenu" type="CanvasLayer"]
-script = "res://scenes/ui/main_menu.gd"
+script = "res://scripts/ui/main_menu.gd"
 
 
 [node name="Background" type="ColorRect" parent="."]

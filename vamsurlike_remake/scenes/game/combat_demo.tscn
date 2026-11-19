@@ -19,6 +19,7 @@ offset_bottom = 16.0
 color = Color(0, 0.368627, 0.913725, 1)
 
 [node name="PlayerStats" type="Node" parent="Player"]
+script = "res://scripts/player/player_stats.gd"
 
 [node name="Spawner" type="Node2D" parent="."]
 wave_data = [
