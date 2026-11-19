@@ -33,7 +33,7 @@ func gui_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		if event.pressed and touch_id == -1:
 			# Only activate if touch is in the lower half of the screen
-			var local_pos := event.position - position
+			var local_pos: Vector2 = event.position - position
 			if local_pos.y > size.y * 0.4:
 				touch_id = event.index
 				is_active = true

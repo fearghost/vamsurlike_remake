@@ -10,26 +10,26 @@ static func _get_game_manager() -> Node:
 	return tree.get_root().get_node_or_null("/root/GameManager")
 
 
-static func transition_to_combat() -> void:
+func transition_to_combat() -> void:
 	var gm := _get_game_manager()
 	if gm != null and gm.has_method("change_state"):
 		gm.change_state(2)  # COMBAT
 	get_tree().change_scene_to_file("res://scenes/game/combat_demo.tscn")
 
 
-static func transition_to_upgrade() -> void:
+func transition_to_upgrade() -> void:
 	var gm := _get_game_manager()
 	if gm != null and gm.has_method("change_state"):
 		gm.change_state(3)  # UPGRADE
 	get_tree().change_scene_to_file("res://scenes/game/upgrade_screen.tscn")
 
 
-static func transition_to_main_menu() -> void:
+func transition_to_main_menu() -> void:
 	var gm := _get_game_manager()
 	if gm != null and gm.has_method("change_state"):
 		gm.change_state(0)  # MAIN_MENU
 	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
 
 
-static func transition_to_scene(scene_path: String) -> void:
+func transition_to_scene(scene_path: String) -> void:
 	get_tree().change_scene_to_file(scene_path)
