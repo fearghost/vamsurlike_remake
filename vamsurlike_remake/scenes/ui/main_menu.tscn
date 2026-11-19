@@ -2,6 +2,7 @@
 
 
 [node name="MainMenu" type="CanvasLayer"]
+script = "res://scenes/ui/main_menu.gd"
 
 
 [node name="Background" type="ColorRect" parent="."]
@@ -50,3 +51,8 @@ offset_top = 440.0
 offset_left = 540.0
 offset_right = 740.0
 offset_bottom = 490.0
+
+
+[connection signal="pressed" method="_on_StartButton_pressed" owner="MainMenu"]
+[connection signal="pressed" method="_on_ContinueButton_pressed" owner="MainMenu"]
+[connection signal="pressed" method="_on_ExitButton_pressed" owner="MainMenu"]
