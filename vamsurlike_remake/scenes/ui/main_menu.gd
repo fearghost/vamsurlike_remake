@@ -3,7 +3,9 @@ extends CanvasLayer
 
 
 func _ready() -> void:
-	pass
+	$StartButton.pressed.connect(_on_StartButton_pressed)
+	$ContinueButton.pressed.connect(_on_ContinueButton_pressed)
+	$ExitButton.pressed.connect(_on_ExitButton_pressed)
 
 
 func _on_StartButton_pressed() -> void:
