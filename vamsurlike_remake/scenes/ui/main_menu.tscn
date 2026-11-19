@@ -1,4 +1,4 @@
-[gd_scene load_steps=1 format=2]
+[gd_scene load_steps=0 format=2]
 
 
 [node name="MainMenu" type="CanvasLayer" parent="."]
@@ -7,7 +7,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = "res://scenes/ui/main_menu.gd"
+
+
 
 [node name="Background" type="ColorRect" parent="."]
 color = Color(0, 0, 0, 1)
