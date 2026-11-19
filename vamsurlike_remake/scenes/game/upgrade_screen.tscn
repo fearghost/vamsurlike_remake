@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=1 format=2]
 
 [node name="UpgradeScreen" type="CanvasLayer"]
 script = "res://scripts/player/upgrade_screen.gd"
