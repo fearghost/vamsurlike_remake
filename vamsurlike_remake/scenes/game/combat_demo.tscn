@@ -1,10 +1,4 @@
-[gd_scene load_steps=7 format=2]
-
-[sub_resource type="ColorRect" id="ColorRect_1"]
-color = Color(0, 0.368627, 0.913725, 1)
-
-[sub_resource type="ColorRect" id="ColorRect_2"]
-color = Color(0.5, 0.5, 0.5, 1)
+[gd_scene load_steps=5 format=2]
 
 [node name="CombatDemo" type="Node2D"]
 script = "res://scripts/player/combat_demo.gd"
@@ -22,7 +16,7 @@ offset_left = -16.0
 offset_top = -16.0
 offset_right = 16.0
 offset_bottom = 16.0
-material = SubResource.load("ColorRect_1")
+color = Color(0, 0.368627, 0.913725, 1)
 
 [node name="Spawner" type="Node2D" parent="."]
 wave_data = [

@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=2]
 
-[node name="PlayerHud" type="CanvasLayer" parent="."]
+[node name="PlayerHud" type="CanvasLayer"]
 script = "res://scripts/ui/player_hud.gd"
 
 [node name="HPBar" type="TextureProgressBar" parent="."]
