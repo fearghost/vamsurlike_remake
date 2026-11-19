@@ -25,7 +25,7 @@ window/stretch/expand=false
 
 renderer/rendering_method="mobile"
 renderer/rendering_method.mobile="gl_compatibility"
-rendering/threads/thread_safety_enabled=true
+rendering/threads/thread_safety_enabled=false
 rendering/environment/default_environment="res://default_env.tres"
 
 [rendering/textures/vram_compression]
