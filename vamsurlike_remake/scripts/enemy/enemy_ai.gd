@@ -14,7 +14,6 @@ var chase_distance: float = 50.0
 var ranged_target_distance: float = 200.0
 var last_shot_time: float = -999.0
 var shot_interval: float = 2.0
-var projectile_scene: PackedScene
 
 # Charge state
 enum ChargeState { IDLE, CHARGING, COOLDOWN }
@@ -43,8 +42,10 @@ func _ready() -> void:
 		current_pattern = enemy_data.ai_pattern
 		move_speed = enemy_data.speed
 
-	# Load projectile scene for ranged attacks
-	projectile_scene = preload("res://scenes/game/projectile.tscn")
+	# NOTE: projectile scene is loaded lazily in _fire_projectile() — a compile-
+	# time preload here creates a circular dependency (projectile.tscn ->
+	# projectile.gd -> EnemyAI class -> enemy_ai.gd -> projectile.tscn) that
+	# intermittently breaks resource loading with "Parse Error: Busy".
 
 	# Create dummy sprite (ColorRect) if the scene doesn't provide one
 	if find_child("Sprite") == null:
@@ -141,7 +142,9 @@ func _ai_charge(delta: float) -> void:
 				charge_state = ChargeState.IDLE
 
 func _fire_projectile(direction: Vector2) -> void:
-	if projectile_scene == null:
+	# Lazy load: avoids a compile-time dependency cycle with projectile.tscn
+	var scene := load("res://scenes/game/projectile.tscn") as PackedScene
+	if scene == null:
 		return
 
 	# Try to use PoolManager for projectile pooling
@@ -155,16 +158,15 @@ func _fire_projectile(direction: Vector2) -> void:
 			if enemy_data != null:
 				projectile.set_damage(enemy_data.attack)
 	else:
-		# Fallback: instantiate directly (class-level projectile_scene already loaded)
-		if projectile_scene != null:
-			var projectile: Projectile = projectile_scene.instantiate() as Projectile
-			if projectile != null:
-				get_tree().get_current_scene().add_child(projectile)
-				projectile.global_position = global_position
-				projectile.source_type = "enemy"
-				projectile.set_velocity(direction * 300.0)
-				if enemy_data != null:
-					projectile.set_damage(enemy_data.attack)
+		# Fallback: instantiate directly
+		var projectile := scene.instantiate() as Projectile
+		if projectile != null:
+			get_tree().get_current_scene().add_child(projectile)
+			projectile.global_position = global_position
+			projectile.source_type = "enemy"
+			projectile.set_velocity(direction * 300.0)
+			if enemy_data != null:
+				projectile.set_damage(enemy_data.attack)
 
 func take_damage(amount: int) -> void:
 	if not is_alive:

@@ -40,14 +40,18 @@ func set_damage(amount: int) -> void:
 
 
 func _on_body_entered(body: Node) -> void:
-	if source_type == "player" and body is EnemyAI:
-		body.take_damage(damage)
+	# Group/method checks instead of `is EnemyAI` / `is PlayerStats`: type
+	# references force GDScript to compile those classes at load time, which
+	# created a circular dependency (projectile.gd -> enemy_ai.gd -> ...).
+	if source_type == "player" and body.is_in_group("enemies"):
+		if body.has_method("take_damage"):
+			body.take_damage(damage)
 		_on_destroyed()
 	elif source_type == "enemy":
 		# Check if body is the player via group membership
 		if body.is_in_group("player"):
 			var stats := body.get_node_or_null("PlayerStats")
-			if stats is PlayerStats:
+			if stats != null and stats.has_method("take_damage"):
 				stats.take_damage(damage)
 			_on_destroyed()
 
