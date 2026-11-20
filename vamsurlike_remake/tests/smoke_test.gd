@@ -36,9 +36,25 @@ func _process(_delta: float) -> bool:
 func _run_tests() -> void:
 	await _ensure_autoloads()
 	await _test_all_scripts_compile()
+	# In -s mode there is no current scene; game code (e.g. Spawner) calls
+	# get_tree().get_current_scene().add_child(...), so give it a container.
+	if current_scene == null and has_method("set_current_scene"):
+		var container := Node.new()
+		container.name = "SmokeTestRoot"
+		root.add_child(container)
+		call("set_current_scene", container)
 	await _test_all_scenes_load()
 	await _test_start_button_flow()
 	_print_summary()
+
+
+func _any_node_has_script(node: Node) -> bool:
+	if node.get_script() != null:
+		return true
+	for child in node.get_children():
+		if _any_node_has_script(child):
+			return true
+	return false
 
 
 ## In -s (script) mode autoloads may or may not be registered.
@@ -100,6 +116,18 @@ func _test_all_scenes_load() -> void:
 		_added_nodes.append(inst)
 		await process_frame
 		await process_frame
+
+		# Regression check: if the .tscn declares scripts, at least one node in
+		# the instantiated tree must actually have a script attached. Godot 4
+		# loads Godot-3-format (format=2) node trees but silently drops scripts —
+		# that was the root cause of the dead Start button on device.
+		var declares_script := FileAccess.get_file_as_string(path).find("script") >= 0
+		if declares_script and not _any_node_has_script(inst):
+			bad += 1
+			failures.append("scene %s: scripts declared but NONE attached (wrong .tscn format?)" % path)
+			printerr("[FAIL] script attachment: %s" % path)
+			continue
+
 		print("[PASS] scene load+instantiate+_ready: %s" % path)
 	if bad == 0:
 		passes.append("all %d scenes loaded and instantiated" % tscn_files.size())

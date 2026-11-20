@@ -48,15 +48,3 @@ jobs:
           name: smoke-test-log
           path: smoke_test.log
           retention-days: 7
-
-      # Publish the log to a dedicated branch so it can be read without admin API access.
-      - name: Publish test log to ci-logs branch
-        if: always()
-        run: |
-          git config user.name "smoke-ci"
-          git config user.email "smoke-ci@users.noreply.github.com"
-          mkdir -p ci_logs
-          cp smoke_test.log ci_logs/smoke_test_latest.log 2>/dev/null || echo "no log captured" > ci_logs/smoke_test_latest.log
-          git add ci_logs/smoke_test_latest.log
-          git commit -m "ci: smoke test log ($GITHUB_SHA)"
-          git push -f origin HEAD:ci-logs

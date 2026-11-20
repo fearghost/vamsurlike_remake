@@ -1,9 +1,9 @@
-[gd_scene load_steps=1 format=2]
+[gd_scene load_steps=2 format=3]
 
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1"]
 
 [node name="MainMenu" type="CanvasLayer"]
-script = "res://scripts/ui/main_menu.gd"
-
+script = ExtResource("1")
 
 [node name="Background" type="ColorRect" parent="."]
 color = Color(0, 0, 0, 1)
@@ -13,7 +13,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture_filter = 1
-
 
 [node name="TitleLabel" type="Label" parent="."]
 layout_mode = 1
@@ -25,7 +24,6 @@ offset_left = 340.0
 offset_right = 940.0
 offset_bottom = 220.0
 
-
 [node name="StartButton" type="Button" parent="."]
 layout_mode = 1
 text = "Start"
@@ -33,7 +31,6 @@ offset_top = 300.0
 offset_left = 540.0
 offset_right = 740.0
 offset_bottom = 350.0
-
 
 [node name="ContinueButton" type="Button" parent="."]
 layout_mode = 1
@@ -43,7 +40,6 @@ offset_left = 540.0
 offset_right = 740.0
 offset_bottom = 420.0
 
-
 [node name="ExitButton" type="Button" parent="."]
 layout_mode = 1
 text = "Exit"
@@ -51,5 +47,3 @@ offset_top = 440.0
 offset_left = 540.0
 offset_right = 740.0
 offset_bottom = 490.0
-
-
