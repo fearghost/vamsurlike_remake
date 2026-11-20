@@ -2,61 +2,57 @@ class_name VirtualJoystick
 extends Control
 
 
-## Virtual on-screen joystick for mobile touch input.
-## Touch anywhere on the lower screen area to activate; drag to control direction.
-
+## Full-screen touch layer for mobile movement input (floating joystick).
+## Touch and drag anywhere on screen to move — the base appears under your
+## finger. Emits value_changed with a normalized direction vector
+## (-1..1 per axis), or Vector2.ZERO when released.
+##
+## The scene must give this Control full-rect anchors so touches anywhere
+## are received (a small fixed-size rect was the old "joystick invisible /
+## character doesn't move" bug).
 
 signal value_changed(direction: Vector2)
 
-@export var base_radius: float = 80.0
-@export var max_radius: float = 50.0
-@export var base_color: Color = Color(0.3, 0.3, 0.3, 0.5)
-@export var stick_color: Color = Color(0.6, 0.6, 0.6, 0.7)
+@export var max_radius: float = 60.0
+@export var base_color: Color = Color(1.0, 1.0, 1.0, 0.25)
+@export var stick_color: Color = Color(1.0, 1.0, 1.0, 0.5)
 
-var base_position: Vector2 = Vector2.ZERO
-var stick_position: Vector2 = Vector2.ZERO
 var is_active: bool = false
 var touch_id: int = -1
+var base_position: Vector2 = Vector2.ZERO
+var stick_position: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
-	# Position joystick in the lower-left area of the screen (150, 550)
-	position = Vector2(150.0, 550.0)
-	# Base center is at local offset (60, 60) → screen (210, 610)
-	base_position = Vector2(60.0, 60.0)
-	stick_position = base_position
+	# Consume touches so they reach this control (display-only HUD controls
+	# use MOUSE_FILTER_IGNORE and are unaffected).
+	mouse_filter = Control.MOUSE_FILTER_STOP
 	queue_redraw()
-	grab_focus()
 
 
-func gui_input(event: InputEvent) -> void:
+func _gui_input(event: InputEvent) -> void:
+	# NOTE: gui_input events already carry LOCAL coordinates — do not subtract
+	# the node position again (that was the old broken math).
 	if event is InputEventScreenTouch:
 		if event.pressed and touch_id == -1:
-			# Only activate if touch is in the lower half of the screen
-			var local_pos: Vector2 = event.position - position
-			if local_pos.y > size.y * 0.4:
-				touch_id = event.index
-				is_active = true
-				base_position = event.position
-				stick_position = base_position
-				queue_redraw()
-				value_changed.emit(Vector2.ZERO)
-
+			touch_id = event.index
+			is_active = true
+			base_position = event.position
+			stick_position = base_position
+			value_changed.emit(Vector2.ZERO)
 		elif not event.pressed and event.index == touch_id:
-			reset_joystick()
-
+			_release()
 	elif event is InputEventScreenDrag:
 		if event.index == touch_id and is_active:
 			var delta: Vector2 = event.position - base_position
-			var distance: float = delta.length()
-			if distance > max_radius:
+			if delta.length() > max_radius:
 				delta = delta.normalized() * max_radius
 			stick_position = base_position + delta
-			queue_redraw()
-			value_changed.emit(delta / max_radius)
+			value_changed.emit((delta / max_radius).limit_length(1.0))
+	queue_redraw()
 
 
-func reset_joystick() -> void:
+func _release() -> void:
 	is_active = false
 	touch_id = -1
 	stick_position = base_position
@@ -67,19 +63,16 @@ func reset_joystick() -> void:
 func get_direction() -> Vector2:
 	if not is_active:
 		return Vector2.ZERO
-	var delta: Vector2 = stick_position - base_position
-	return (delta / max_radius).limit_length(1.0)
-
-
-func _process(_delta: float) -> void:
-	# Visual update handled by _draw() via queue_redraw()
-	pass
+	return ((stick_position - base_position) / max_radius).limit_length(1.0)
 
 
 func _draw() -> void:
-	# Draw the outer base circle
-	draw_circle(base_position, base_radius, base_color)
-
-	# Draw the inner stick circle
-	var delta: Vector2 = stick_position - base_position
-	draw_circle(stick_position, max_radius * 0.6, stick_color)
+	if is_active:
+		# Joystick under the finger
+		draw_circle(base_position, max_radius, base_color)
+		draw_circle(stick_position, max_radius * 0.5, stick_color)
+	else:
+		# Idle hint in the lower-left so players know where to touch.
+		var hint := Vector2(140.0, size.y - 140.0)
+		draw_circle(hint, max_radius, base_color)
+		draw_circle(hint, max_radius * 0.5, stick_color)
