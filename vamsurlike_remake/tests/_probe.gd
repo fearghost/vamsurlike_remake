@@ -40,7 +40,8 @@ func _run_probes() -> void:
 	var cs := scene.instantiate()
 	root.add_child(cs)
 	# Game code (Spawner) calls get_tree().get_current_scene(); give it a valid one.
-	call("set_current_scene", cs)
+	if has_method("set_current_scene"):
+		call("set_current_scene", cs)
 	await process_frame
 	await process_frame
 
@@ -57,12 +58,12 @@ func _run_probes() -> void:
 	print("[P1] joystick rect: %s | visible_in_tree: %s | mouse_filter: %d" % [str(joystick.get_rect()), str(joystick.is_visible_in_tree()), joystick.mouse_filter])
 	if not (parent is CanvasLayer):
 		_failures.append("P1: joystick parent is '%s' — expected CanvasLayer (on-device touch routing only works with the proven CanvasLayer pattern)" % parent.get_class())
-	var rs := joystick.get_rect().size
+	var rs: Vector2 = joystick.get_rect().size
 	if rs.x < 640.0 or rs.y < 360.0:
 		_failures.append("P1: joystick rect too small to cover the viewport: %s" % str(joystick.get_rect()))
 
 	# --- P2: real input pipeline moves the player ---
-	var start_pos := player.global_position
+	var start_pos: Vector2 = player.global_position
 	var moved := await _touch_drag_moves_player(player, start_pos)
 	print("[P2] real input pipeline (Input.parse_input_event) moved player: %s" % str(moved))
 	if not moved:

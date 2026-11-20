@@ -37,9 +37,6 @@ func _ready() -> void:
 	# Add to enemies group so AutoAttack can find them
 	add_to_group("enemies")
 
-	# Contact damage: deal damage when the player body touches this enemy
-	body_entered.connect(_on_body_entered)
-
 	# Auto-discover player reference
 	player_ref = _find_player()
 
@@ -95,6 +92,10 @@ func _process(delta: float) -> void:
 			_ai_ranged(delta)
 		"charge":
 			_ai_charge(delta)
+
+	# Contact damage (CharacterBody2D has no body_entered signal — use the
+	# last slide collision from this frame's move_and_slide() instead).
+	_check_contact_damage()
 
 func _ai_chase(delta: float) -> void:
 	var direction := (player_ref.global_position - global_position).normalized()
@@ -196,23 +197,27 @@ func _on_defeated() -> void:
 	queue_free()
 
 
-func _on_body_entered(body: Node) -> void:
+func _check_contact_damage() -> void:
 	if not is_alive:
 		return
-
-	# Group/method checks (project convention — same pattern as projectile.gd;
-	# static type references create circular class dependencies at load time).
-	if not body.is_in_group("player"):
+	var col := get_last_slide_collision()
+	if col == null:
 		return
-	var stats := body.get_node_or_null("PlayerStats")
-	if stats == null or not stats.has_method("take_damage"):
+	var body := col.get_collider()
+	if body == null or not body.is_in_group("player"):
 		return
 
-	# Cooldown so one enemy can't re-trigger on collision jitter.
+	# Cooldown so one enemy can't re-trigger every frame while in contact.
 	var now := Time.get_ticks_msec() / 1000.0
 	if now - last_contact_hit_time < CONTACT_HIT_COOLDOWN:
 		return
 	last_contact_hit_time = now
+
+	# Group/method checks (project convention — same pattern as projectile.gd;
+	# static type references create circular class dependencies at load time).
+	var stats := body.get_node_or_null("PlayerStats")
+	if stats == null or not stats.has_method("take_damage"):
+		return
 
 	var damage: int = 5
 	if enemy_data != null:
