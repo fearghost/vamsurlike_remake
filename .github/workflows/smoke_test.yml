@@ -29,6 +29,18 @@ jobs:
             --import \
             --quit
 
+      - name: Run input/combat probe (focused diagnostics)
+        timeout-minutes: 5
+        run: |
+          set +o pipefail
+          ./Godot_v4.3-stable_linux.x86_64 --headless \
+            --path vamsurlike_remake \
+            -s tests/_probe.gd 2>&1 | tee probe.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "=== Probe exit code: ${EXIT_CODE} ==="
+          tail -30 probe.log
+          exit ${EXIT_CODE}
+
       - name: Run smoke test
         timeout-minutes: 10
         run: |

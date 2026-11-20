@@ -202,9 +202,11 @@ func _test_start_button_flow() -> void:
 
 ## The on-device bug: "blue square won't move, joystick doesn't appear".
 ## Inject touch+drag through the real input pipeline and require the player
-## to actually change position. If the pipeline path fails, retry by driving
-## the control directly so CI can tell whether the joystick logic or the
-## touch routing is broken.
+## to actually change position. If the pipeline path fails, we still probe
+## the direct _gui_input path — but ONLY as a diagnostic to tell CI whether
+## input ROUTING is broken (direct works) or the joystick logic itself is
+## broken (direct also fails). The test FAILS either way: if real touch
+## routing doesn't work in CI, it won't work on device.
 func _test_joystick_movement() -> void:
 	print("--- Phase 4: virtual joystick drives player movement ---")
 	var cs := current_scene
@@ -219,26 +221,44 @@ func _test_joystick_movement() -> void:
 		printerr("[FAIL] joystick: nodes missing (player=%s, joystick=%s)" % [str(player), str(joystick)])
 		return
 
+	# Layout diagnostics — a zero/empty rect means the control can never be
+	# hit-tested (the on-device "joystick invisible / no response" symptom).
+	print("[DIAG] joystick parent: %s (type %s)" % [joystick.get_parent().name, joystick.get_parent().get_class()])
+	print("[DIAG] joystick rect: %s | visible_in_tree: %s | mouse_filter: %d" % [str(joystick.get_rect()), str(joystick.is_visible_in_tree()), joystick.mouse_filter])
+
 	var start_pos: Vector2 = player.global_position
 	var moved := await _touch_drag_and_check_movement(player, start_pos, 300.0, 500.0, 80.0)
-	if not moved:
-		# Fallback: drive the control directly (bypasses input routing).
-		joystick._gui_input(_make_touch(300.0, 500.0, true))
-		await process_frame
-		joystick._gui_input(_make_drag(380.0, 500.0))
-		for i in range(10):
-			await process_frame
-			if player.global_position != start_pos:
-				moved = true
-				break
 	_touch(380.0, 500.0, false)
 	await process_frame
 
 	if moved:
-		passes.append("virtual joystick touch+drag moves the player")
+		passes.append("virtual joystick touch+drag moves the player (via real input pipeline)")
 	else:
-		failures.append("joystick: player did not move after touch+drag (input never reached the player)")
-		printerr("[FAIL] joystick movement: player stayed at %s" % str(start_pos))
+		# Diagnostic only — proves whether the joystick logic works when the
+		# event is delivered by hand (bypassing GUI hit-testing/routing).
+		var direct_works := await _direct_gui_input_check(player, start_pos)
+		failures.append("joystick: synthetic touch never reached the joystick via the real input pipeline (direct-drive worked=%s)" % str(direct_works))
+		printerr("[FAIL] joystick movement: real input pipeline did not deliver the touch (player stayed at %s; direct _gui_input drive worked=%s)" % [str(start_pos), str(direct_works)])
+		if direct_works:
+			printerr("[DIAG] => input ROUTING is broken (control logic is fine). Check joystick rect/parent type and GUI hit-testing.")
+		else:
+			printerr("[DIAG] => joystick LOGIC itself is broken (even direct _gui_input does nothing).")
+
+
+func _direct_gui_input_check(player: Node, start_pos: Vector2) -> bool:
+	var joystick := current_scene.get_node_or_null("VirtualJoystick")
+	if joystick == null:
+		return false
+	joystick._gui_input(_make_touch(300.0, 500.0, true))
+	await process_frame
+	joystick._gui_input(_make_drag(380.0, 500.0))
+	for i in range(10):
+		await process_frame
+		if player.global_position != start_pos:
+			return true
+	_touch(380.0, 500.0, false)
+	await process_frame
+	return false
 
 
 func _touch_drag_and_check_movement(player: Node, start_pos: Vector2, x: float, y: float, drag_dx: float) -> bool:

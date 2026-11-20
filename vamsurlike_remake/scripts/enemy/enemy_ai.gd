@@ -27,11 +27,18 @@ const CHARGE_SPEED_MULTIPLIER: float = 3.0
 var current_hp: int = 50
 var is_alive: bool = true
 
+# Contact attack state (damage dealt when the player touches this enemy)
+var last_contact_hit_time: float = -999.0
+const CONTACT_HIT_COOLDOWN: float = 0.8
+
 signal died
 
 func _ready() -> void:
 	# Add to enemies group so AutoAttack can find them
 	add_to_group("enemies")
+
+	# Contact damage: deal damage when the player body touches this enemy
+	body_entered.connect(_on_body_entered)
 
 	# Auto-discover player reference
 	player_ref = _find_player()
@@ -187,6 +194,30 @@ func take_damage(amount: int) -> void:
 func _on_defeated() -> void:
 	died.emit()
 	queue_free()
+
+
+func _on_body_entered(body: Node) -> void:
+	if not is_alive:
+		return
+
+	# Group/method checks (project convention — same pattern as projectile.gd;
+	# static type references create circular class dependencies at load time).
+	if not body.is_in_group("player"):
+		return
+	var stats := body.get_node_or_null("PlayerStats")
+	if stats == null or not stats.has_method("take_damage"):
+		return
+
+	# Cooldown so one enemy can't re-trigger on collision jitter.
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - last_contact_hit_time < CONTACT_HIT_COOLDOWN:
+		return
+	last_contact_hit_time = now
+
+	var damage: int = 5
+	if enemy_data != null:
+		damage = enemy_data.attack
+	stats.take_damage(damage)
 
 
 func _find_player() -> Node2D:
