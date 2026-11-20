@@ -1,0 +1,50 @@
+name: Headless Smoke Test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    name: Godot headless smoke test (Start button flow)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Godot 4.3 CLI
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip -O godot.zip
+          unzip -o godot.zip
+          chmod +x Godot_v4.3-stable_linux.x86_64
+
+      - name: Import project (build .godot cache)
+        run: |
+          ./Godot_v4.3-stable_linux.x86_64 --headless \
+            --path vamsurlike_remake \
+            --import \
+            --quit
+
+      - name: Run smoke test
+        timeout-minutes: 10
+        run: |
+          set +o pipefail
+          ./Godot_v4.3-stable_linux.x86_64 --headless \
+            --path vamsurlike_remake \
+            -s tests/smoke_test.gd 2>&1 | tee smoke_test.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "=== Godot exit code: ${EXIT_CODE} ==="
+          tail -25 smoke_test.log
+          exit ${EXIT_CODE}
+
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-log
+          path: smoke_test.log
+          retention-days: 7

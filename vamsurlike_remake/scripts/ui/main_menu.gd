@@ -19,11 +19,20 @@ func _ready() -> void:
 
 
 func _on_start_pressed() -> void:
-	print("[MainMenu] Starting new game")
+	print("[MainMenu] Start button pressed!")
 	var gm := get_node_or_null("/root/GameManager")
 	if gm != null:
 		gm.reset_game()
-	get_tree().change_scene_to_file("res://scenes/game/combat_demo.tscn")
+		print("[MainMenu] GameManager reset done")
+	var scene_path := "res://scenes/game/combat_demo.tscn"
+	var scene := load(scene_path)
+	if scene == null:
+		push_error("[MainMenu] FAILED to load scene: %s" % scene_path)
+		printerr("[MainMenu] Scene load failed!")
+		return
+	print("[MainMenu] Scene loaded, changing...")
+	var result := get_tree().change_scene_to_packed(scene)
+	print("[MainMenu] change_scene result: %d" % result)
 
 
 func _on_continue_pressed() -> void:
