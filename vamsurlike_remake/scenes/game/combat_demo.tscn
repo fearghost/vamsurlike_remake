@@ -34,17 +34,17 @@ script = ExtResource("7")
 wave_data = [
 {
 "wave_number": 1,
-"enemies": PackedStringArray("chase_01", "chase_01"),
+"enemies": ["chase_01", "chase_01"],
 "spawn_interval": 2.0
 },
 {
 "wave_number": 2,
-"enemies": PackedStringArray("ranged_01", "chase_01", "charge_01"),
+"enemies": ["ranged_01", "chase_01", "charge_01"],
 "spawn_interval": 1.5
 },
 {
 "wave_number": 3,
-"enemies": PackedStringArray("charge_01", "charge_01", "ranged_01", "ranged_01", "chase_01"),
+"enemies": ["charge_01", "charge_01", "ranged_01", "ranged_01", "chase_01"],
 "spawn_interval": 1.0
 }
 ]

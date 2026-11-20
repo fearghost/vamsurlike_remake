@@ -13,8 +13,10 @@ func _ready() -> void:
 	# Connect to the PlayerStats node if it exists in the tree
 	var player_stats := _find_player_stats()
 	if player_stats != null:
-		player_stats.hp_changed.connect(update_hp)
-		player_stats.died.connect(_on_player_died)
+		if not player_stats.hp_changed.is_connected(update_hp):
+			player_stats.hp_changed.connect(update_hp)
+		if not player_stats.died.is_connected(_on_player_died):
+			player_stats.died.connect(_on_player_died)
 
 	# Connect to GameManager for stage updates
 	var gm := get_node_or_null("/root/GameManager")

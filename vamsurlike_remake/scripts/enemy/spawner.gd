@@ -37,6 +37,10 @@ func start_wave(wave_index: int) -> void:
 
 	current_wave = wave_index
 	var wave := wave_data[wave_index]
+	# Scene files may serialize the enemy list as PackedStringArray, which has
+	# no pop_front() — normalize to a plain (mutable) Array.
+	if wave["enemies"] is PackedStringArray:
+		wave["enemies"] = Array(wave["enemies"])
 	_enemies_alive = wave["enemies"].size()
 	is_waving_active = true
 

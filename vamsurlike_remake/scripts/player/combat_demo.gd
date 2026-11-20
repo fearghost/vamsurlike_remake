@@ -27,10 +27,11 @@ func _ready() -> void:
 	if spawner != null:
 		spawner.start_wave(0)
 
-	# Sync HUD with player stats
+	# Sync HUD with player stats (HUD may have already self-connected in _ready)
 	if player != null and player.player_stats != null:
 		hud.update_hp(player.player_stats.current_hp, player.player_stats.max_hp)
-		player.player_stats.hp_changed.connect(hud.update_hp)
+		if not player.player_stats.hp_changed.is_connected(hud.update_hp):
+			player.player_stats.hp_changed.connect(hud.update_hp)
 
 	var gm := get_node_or_null("/root/GameManager")
 	if gm != null:

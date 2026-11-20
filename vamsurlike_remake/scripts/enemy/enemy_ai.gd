@@ -46,26 +46,35 @@ func _ready() -> void:
 	# Load projectile scene for ranged attacks
 	projectile_scene = preload("res://scenes/game/projectile.tscn")
 
-	# Create dummy sprite (ColorRect)
-	var sprite := ColorRect.new()
-	sprite.name = "Sprite"
-	sprite.size = Vector2(32, 32)
-	sprite.position = Vector2(-16, -16)
-	match current_pattern:
-		"ranged":
-			sprite.color = Color(0.8, 0.4, 0.8)  # Purple for ranged
-		"charge":
-			sprite.color = Color(0.8, 0.2, 0.2)  # Red for charge
-		_:
-			sprite.color = Color(1.0, 0.3, 0.3)  # Red for chase
-	add_child(sprite)
+	# Create dummy sprite (ColorRect) if the scene doesn't provide one
+	if find_child("Sprite") == null:
+		var sprite := ColorRect.new()
+		sprite.name = "Sprite"
+		sprite.size = Vector2(32, 32)
+		sprite.position = Vector2(-16, -16)
+		match current_pattern:
+			"ranged":
+				sprite.color = Color(0.8, 0.4, 0.8)  # Purple for ranged
+			"charge":
+				sprite.color = Color(0.8, 0.2, 0.2)  # Red for charge
+			_:
+				sprite.color = Color(1.0, 0.3, 0.3)  # Red for chase
+		add_child(sprite)
 
-	# Add collision shape for CharacterBody2D
-	var collision := CollisionShape2D.new()
-	var shape := CircleShape2D.new()
-	shape.radius = 16.0
-	collision.shape = shape
-	add_child(collision)
+	# Add collision shape if the scene doesn't provide one
+	if not _has_collision_shape():
+		var collision := CollisionShape2D.new()
+		var shape := CircleShape2D.new()
+		shape.radius = 16.0
+		collision.shape = shape
+		add_child(collision)
+
+
+func _has_collision_shape() -> bool:
+	for child in get_children():
+		if child is CollisionShape2D:
+			return true
+	return false
 
 func _process(delta: float) -> void:
 	if not is_alive or player_ref == null:
