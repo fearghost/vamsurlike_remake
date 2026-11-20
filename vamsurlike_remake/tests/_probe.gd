@@ -81,19 +81,22 @@ func _run_probes() -> void:
 			_failures.append("P3: cannot load chase_01.tres / enemy_ai.tscn")
 		else:
 			var enemy := enemy_scene.instantiate() as EnemyAI
-			enemy.enemy_data = enemy_data_res
-			# Spawn a few pixels away so body_entered fires on overlap.
-			enemy.global_position = player.global_position + Vector2(20, 0)
-			cs.add_child(enemy)
-			var hp_after: int = hp_before
-			for i in range(30):
-				await process_frame
-				hp_after = stats.current_hp
-				if hp_after < hp_before:
-					break
-			print("[P3] player HP before contact: %d, after: %d" % [hp_before, hp_after])
-			if hp_after >= hp_before:
-				_failures.append("P3: enemy contact did NOT reduce player HP (stayed at %d)" % hp_before)
+			if enemy == null:
+				_failures.append("P3: enemy_ai.tscn instantiate failed (EnemyAI class unavailable — check enemy_ai.gd for parse errors)")
+			else:
+				enemy.enemy_data = enemy_data_res
+				# Spawn a few pixels away so body_entered fires on overlap.
+				enemy.global_position = player.global_position + Vector2(20, 0)
+				cs.add_child(enemy)
+				var hp_after: int = hp_before
+				for i in range(30):
+					await process_frame
+					hp_after = stats.current_hp
+					if hp_after < hp_before:
+						break
+				print("[P3] player HP before contact: %d, after: %d" % [hp_before, hp_after])
+				if hp_after >= hp_before:
+					_failures.append("P3: enemy contact did NOT reduce player HP (stayed at %d)" % hp_before)
 
 	_finish()
 

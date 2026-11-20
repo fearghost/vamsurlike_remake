@@ -203,7 +203,9 @@ func _check_contact_damage() -> void:
 	var col := get_last_slide_collision()
 	if col == null:
 		return
-	var body := col.get_collider()
+	# Cast immediately: get_collider() returns Object, and dynamic calls on an
+	# Object-typed value yield Variant (breaks `:=` inference downstream).
+	var body := col.get_collider() as Node
 	if body == null or not body.is_in_group("player"):
 		return
 
