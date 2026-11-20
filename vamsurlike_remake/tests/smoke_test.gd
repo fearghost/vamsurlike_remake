@@ -215,7 +215,7 @@ func _test_joystick_movement() -> void:
 		return
 
 	var player := cs.get_node_or_null("Player")
-	var joystick := cs.get_node_or_null("VirtualJoystick")
+	var joystick := cs.get_node_or_null("JoystickLayer/VirtualJoystick")
 	if player == null or joystick == null:
 		failures.append("joystick: Player or VirtualJoystick missing from combat scene")
 		printerr("[FAIL] joystick: nodes missing (player=%s, joystick=%s)" % [str(player), str(joystick)])
@@ -246,7 +246,7 @@ func _test_joystick_movement() -> void:
 
 
 func _direct_gui_input_check(player: Node, start_pos: Vector2) -> bool:
-	var joystick := current_scene.get_node_or_null("VirtualJoystick")
+	var joystick := current_scene.get_node_or_null("JoystickLayer/VirtualJoystick")
 	if joystick == null:
 		return false
 	joystick._gui_input(_make_touch(300.0, 500.0, true))

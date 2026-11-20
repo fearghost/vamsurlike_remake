@@ -38,10 +38,11 @@ func _run_probes() -> void:
 		_finish()
 		return
 	var cs := scene.instantiate()
-	root.add_child(cs)
-	# Game code (Spawner) calls get_tree().get_current_scene(); give it a valid one.
+	# Game code (Spawner) calls get_tree().get_current_scene(); give it a valid one
+	# BEFORE _ready runs (add_child triggers _ready).
 	if has_method("set_current_scene"):
 		call("set_current_scene", cs)
+	root.add_child(cs)
 	await process_frame
 	await process_frame
 

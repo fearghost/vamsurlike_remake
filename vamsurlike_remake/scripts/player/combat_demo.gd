@@ -4,7 +4,7 @@ extends Node2D
 
 @onready var player: PlayerController = $Player
 @onready var spawner: Spawner = $Spawner
-@onready var virtual_joystick: VirtualJoystick = $VirtualJoystick
+@onready var virtual_joystick: VirtualJoystick = $JoystickLayer/VirtualJoystick
 @onready var hud: PlayerHud = $PlayerHud
 
 
