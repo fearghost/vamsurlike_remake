@@ -220,7 +220,7 @@ func _test_joystick_movement() -> void:
 		return
 
 	var start_pos: Vector2 = player.global_position
-	var moved := _touch_drag_and_check_movement(player, start_pos, 300.0, 500.0, 80.0)
+	var moved := await _touch_drag_and_check_movement(player, start_pos, 300.0, 500.0, 80.0)
 	if not moved:
 		# Fallback: drive the control directly (bypasses input routing).
 		joystick._gui_input(_make_touch(300.0, 500.0, true))
@@ -268,11 +268,11 @@ func _make_drag(x: float, y: float) -> InputEventScreenDrag:
 
 
 func _touch(x: float, y: float, pressed: bool) -> void:
-	Input.parse_input_events([_make_touch(x, y, pressed)])
+	Input.parse_input_event(_make_touch(x, y, pressed))
 
 
 func _drag(x: float, y: float) -> void:
-	Input.parse_input_events([_make_drag(x, y)])
+	Input.parse_input_event(_make_drag(x, y))
 
 
 ## The spawner spawns enemy #1 immediately in start_wave(); verify an enemy
