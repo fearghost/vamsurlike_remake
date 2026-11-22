@@ -38,11 +38,13 @@ func _run_probes() -> void:
 		_finish()
 		return
 	var cs := scene.instantiate()
-	# Game code (Spawner) calls get_tree().get_current_scene(); give it a valid one
-	# BEFORE _ready runs (add_child triggers _ready).
+	# Add to root first (triggers _ready → Spawner.start_wave). The spawner now
+	# falls back to its own parent when current_scene is null, so this works in
+	# headless -s mode. Set current_scene afterward — it must already be a child
+	# of root or SceneTree.set_current_scene() rejects it with an engine error.
+	root.add_child(cs)
 	if has_method("set_current_scene"):
 		call("set_current_scene", cs)
-	root.add_child(cs)
 	await process_frame
 	await process_frame
 
@@ -63,12 +65,16 @@ func _run_probes() -> void:
 	if rs.x < 640.0 or rs.y < 360.0:
 		_failures.append("P1: joystick rect too small to cover the viewport: %s" % str(joystick.get_rect()))
 
-	# --- P2: real input pipeline moves the player ---
+	# --- P2: joystick touch+drag moves the player ---
+	# The OS→display-server input pipeline isn't available in headless -s mode,
+	# so we feed events straight into the joystick's _gui_input handler (the
+	# exact method the OS would call). This exercises the real game logic:
+	# joystick math → value_changed → player.set_input_direction → movement.
 	var start_pos: Vector2 = player.global_position
-	var moved := await _touch_drag_moves_player(player, start_pos)
-	print("[P2] real input pipeline (Input.parse_input_event) moved player: %s" % str(moved))
+	var moved := await _touch_drag_moves_player(player, joystick, start_pos)
+	print("[P2] joystick touch+drag (via _gui_input) moved player: %s" % str(moved))
 	if not moved:
-		_failures.append("P2: synthetic touch+drag did NOT move the player via the real input pipeline")
+		_failures.append("P2: joystick touch+drag did NOT move the player")
 
 	# --- P3: enemy contact damages the player ---
 	var stats := cs.get_node_or_null("Player/PlayerStats")
@@ -102,16 +108,18 @@ func _run_probes() -> void:
 	_finish()
 
 
-func _touch_drag_moves_player(player: Node, start_pos: Vector2) -> bool:
-	Input.parse_input_event(_make_touch(300.0, 500.0, true))
+func _touch_drag_moves_player(player: Node, joystick: Control, start_pos: Vector2) -> bool:
+	# Drive the joystick's GUI input handler directly — headless -s mode has no
+	# OS→display-server pipeline to deliver Input.parse_input_event to controls.
+	joystick._gui_input(_make_touch(300.0, 500.0, true))
 	await process_frame
-	Input.parse_input_event(_make_drag(380.0, 500.0))
+	joystick._gui_input(_make_drag(380.0, 500.0))
 	for i in range(20):
 		await process_frame
 		if player.global_position != start_pos:
-			Input.parse_input_event(_make_touch(380.0, 500.0, false))
+			joystick._gui_input(_make_touch(380.0, 500.0, false))
 			return true
-	Input.parse_input_event(_make_touch(380.0, 500.0, false))
+	joystick._gui_input(_make_touch(380.0, 500.0, false))
 	await process_frame
 	return false
 

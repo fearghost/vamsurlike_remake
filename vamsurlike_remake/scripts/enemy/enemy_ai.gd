@@ -169,7 +169,10 @@ func _fire_projectile(direction: Vector2) -> void:
 		# Fallback: instantiate directly
 		var projectile := scene.instantiate() as Projectile
 		if projectile != null:
-			get_tree().get_current_scene().add_child(projectile)
+			var container := get_tree().current_scene
+			if container == null:
+				container = get_parent() if get_parent() != null else get_tree().root
+			container.add_child(projectile)
 			projectile.global_position = global_position
 			projectile.source_type = "enemy"
 			projectile.set_velocity(direction * 300.0)

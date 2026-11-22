@@ -111,7 +111,13 @@ func spawn_enemy(enemy_data: EnemyData, position: Vector2) -> void:
 	# Connect enemy death signal to track remaining enemies
 	enemy.died.connect(_on_enemy_died)
 
-	get_tree().get_current_scene().add_child(enemy)
+	# Spawn into the current scene; fall back to this spawner's parent (the
+	# combat scene root) when current_scene is unavailable — e.g. headless -s
+	# test mode, where the scene isn't registered as the current scene.
+	var container := get_tree().current_scene
+	if container == null:
+		container = get_parent() if get_parent() != null else get_tree().root
+	container.add_child(enemy)
 
 
 func _on_spawn_timer_timeout() -> void:

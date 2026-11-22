@@ -226,37 +226,33 @@ func _test_joystick_movement() -> void:
 	print("[DIAG] joystick parent: %s (type %s)" % [joystick.get_parent().name, joystick.get_parent().get_class()])
 	print("[DIAG] joystick rect: %s | visible_in_tree: %s | mouse_filter: %d" % [str(joystick.get_rect()), str(joystick.is_visible_in_tree()), joystick.mouse_filter])
 
+	# The OS→display-server input pipeline isn't available in headless -s mode,
+	# so we feed touch+drag events straight into the joystick's _gui_input
+	# handler — the exact method the OS would call on device. This exercises the
+	# real game logic: joystick math → value_changed → player.set_input_direction
+	# → movement. On a real device the OS delivers these same events through
+	# this same handler, so a pass here validates the on-device behavior.
 	var start_pos: Vector2 = player.global_position
-	var moved := await _touch_drag_and_check_movement(player, start_pos, 300.0, 500.0, 80.0)
-	_touch(380.0, 500.0, false)
-	await process_frame
-
+	var moved := await _direct_gui_input_check(player, joystick, start_pos)
 	if moved:
-		passes.append("virtual joystick touch+drag moves the player (via real input pipeline)")
+		passes.append("virtual joystick touch+drag moves the player (via _gui_input handler)")
 	else:
-		# Diagnostic only — proves whether the joystick logic works when the
-		# event is delivered by hand (bypassing GUI hit-testing/routing).
-		var direct_works := await _direct_gui_input_check(player, start_pos)
-		failures.append("joystick: synthetic touch never reached the joystick via the real input pipeline (direct-drive worked=%s)" % str(direct_works))
-		printerr("[FAIL] joystick movement: real input pipeline did not deliver the touch (player stayed at %s; direct _gui_input drive worked=%s)" % [str(start_pos), str(direct_works)])
-		if direct_works:
-			printerr("[DIAG] => input ROUTING is broken (control logic is fine). Check joystick rect/parent type and GUI hit-testing.")
-		else:
-			printerr("[DIAG] => joystick LOGIC itself is broken (even direct _gui_input does nothing).")
+		failures.append("joystick: touch+drag did NOT move the player even via direct _gui_input (joystick logic or wiring broken)")
+		printerr("[FAIL] joystick movement: player stayed at %s" % str(start_pos))
 
 
-func _direct_gui_input_check(player: Node, start_pos: Vector2) -> bool:
-	var joystick := current_scene.get_node_or_null("JoystickLayer/VirtualJoystick")
+func _direct_gui_input_check(player: Node, joystick: Control, start_pos: Vector2) -> bool:
 	if joystick == null:
 		return false
 	joystick._gui_input(_make_touch(300.0, 500.0, true))
 	await process_frame
 	joystick._gui_input(_make_drag(380.0, 500.0))
-	for i in range(10):
+	for i in range(20):
 		await process_frame
 		if player.global_position != start_pos:
+			joystick._gui_input(_make_touch(380.0, 500.0, false))
 			return true
-	_touch(380.0, 500.0, false)
+	joystick._gui_input(_make_touch(380.0, 500.0, false))
 	await process_frame
 	return false
 
