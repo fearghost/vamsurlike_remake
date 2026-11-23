@@ -15,6 +15,8 @@ var pools: Dictionary = {}
 ## [param size] inactive instances.
 func register_pool(name: String, template: PackedScene, size: int) -> void:
 	var p := ObjectPool.new()
+	# Keep the pool in the tree so get_object() can attach instances to it.
+	add_child(p)
 	p.init(template, size)
 	pools[name] = p
 

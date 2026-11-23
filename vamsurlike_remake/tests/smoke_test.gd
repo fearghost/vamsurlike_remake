@@ -14,6 +14,9 @@ extends SceneTree
 ##      "character doesn't move / joystick invisible" bug).
 ##   5. Verify the Spawner put at least one enemy into the scene tree
 ##      (validates spawner + EnemyData .tres + enemy scene chain).
+##   6. Verify auto-attack actually fires a live projectile (in-tree, moving)
+##      and that collision layers keep enemies from physically blocking the
+##      player (the "stuck on contact / no attack effect" on-device bugs).
 ##
 ## Exit code: 0 = all pass, 1 = at least one failure.
 
@@ -52,6 +55,7 @@ func _run_tests() -> void:
 	await _test_start_button_flow()
 	await _test_joystick_movement()
 	await _test_enemy_spawning()
+	await _test_auto_attack_and_collision()
 	_print_summary()
 
 
@@ -307,6 +311,77 @@ func _test_enemy_spawning() -> void:
 	else:
 		failures.append("spawning: no enemies in group 'enemies' after combat start (spawner or EnemyData load broken?)")
 		printerr("[FAIL] spawning: 0 enemies in tree")
+
+
+## Phase 6: the on-device "no attack effect / stuck when touching an enemy"
+## bugs. Verifies (a) collision layers keep enemies from physically blocking
+## the player while preserving contact damage, (b) the one-shot auto-attack
+## timer keeps running after a no-target timeout, and (c) a fired projectile
+## actually enters the scene tree and moves (pooled projectiles used to be
+## acquired but never added to the tree — invisible, immobile, no damage).
+func _test_auto_attack_and_collision() -> void:
+	print("--- Phase 6: auto-attack projectile + collision layers ---")
+	var cs := current_scene
+	if cs == null or not cs.name.to_lower().contains("combat"):
+		failures.append("auto-attack: combat scene not active (Phase 3 failed) — skipped")
+		return
+
+	var player := cs.get_node_or_null("Player")
+	var auto_attack := player.get_node_or_null("AutoAttack") if player != null else null
+	if player == null or auto_attack == null:
+		failures.append("auto-attack: Player/AutoAttack missing from combat scene")
+		return
+
+	var enemies := get_nodes_in_group("enemies")
+	if enemies.is_empty():
+		failures.append("collision: no enemies in tree to check layers against (Phase 5 failed?)")
+		return
+
+	# 6a. Player must not be physically blocked by enemies (stuck bug), while
+	# enemies must still detect the player for contact damage.
+	var enemy := enemies[0] as Node2D
+	if player.collision_mask & enemy.collision_layer != 0:
+		failures.append("collision: player mask %d includes enemy layer %d — enemies physically block the player (stuck-on-contact bug)" % [player.collision_mask, enemy.collision_layer])
+	else:
+		passes.append("player does not collide with enemies (no stuck-on-contact)")
+	if enemy.collision_mask & player.collision_layer == 0:
+		failures.append("collision: enemy mask %d does not include player layer %d — contact damage would never trigger" % [enemy.collision_mask, player.collision_layer])
+	else:
+		passes.append("enemies still detect the player (contact damage intact)")
+
+	# 6b. The one-shot attack timer must restart even when no enemy is in
+	# range — otherwise the first empty timeout kills auto-attack forever.
+	auto_attack.is_attacking = true
+	auto_attack.nearest_enemy = null
+	auto_attack._on_attack_timer_timeout()
+	if auto_attack.timer.is_stopped():
+		failures.append("auto-attack: timer stopped after a no-target timeout — auto-attack is permanently dead")
+	else:
+		passes.append("auto-attack timer restarts after a no-target timeout")
+
+	# 6c. End-to-end: teleport an enemy into attack range and require a real
+	# projectile to appear in the tree within one attack interval, then verify
+	# it actually moves (in-tree _process).
+	enemy.global_position = player.global_position + Vector2(100, 0)
+	var proj: Node2D = null
+	for i in range(90):  # ~1.5s at 60fps; attack_interval is 1.0s
+		await process_frame
+		var live := get_nodes_in_group("projectiles")
+		if not live.is_empty():
+			proj = live[0] as Node2D
+			break
+	if proj == null:
+		failures.append("auto-attack: no projectile entered the tree within 1.5s of an enemy entering range (fire path or pool broken)")
+		return
+	passes.append("auto-attack fired a projectile into the scene tree")
+
+	var p0: Vector2 = proj.global_position
+	for i in range(5):
+		await process_frame
+	if is_instance_valid(proj) and proj.global_position.distance_to(p0) > 1.0:
+		passes.append("projectile moves after firing (in-tree, _process running)")
+	else:
+		failures.append("projectile did not move after firing (not in tree / _process dead)")
 
 
 func _print_summary() -> void:

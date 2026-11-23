@@ -76,6 +76,10 @@ func fire_projectile(target_position: Vector2) -> void:
 	if pool_manager != null and pool_manager.has_method("acquire"):
 		var projectile: Projectile = pool_manager.acquire("projectile") as Projectile
 		if projectile != null:
+			# Pooled projectiles are reused — reset stale state from a
+			# previous owner (an "enemy" shot would hit the player).
+			projectile.source_type = "player"
+			projectile.apply_source_style()
 			projectile.global_position = parent.global_position
 			if projectile.has_method("set_velocity"):
 				projectile.set_velocity(direction * 400.0)
@@ -86,6 +90,8 @@ func fire_projectile(target_position: Vector2) -> void:
 		var projectile_scene := preload("res://scenes/game/projectile.tscn") as PackedScene
 		if projectile_scene != null:
 			var projectile: Projectile = projectile_scene.instantiate() as Projectile
+			projectile.source_type = "player"
+			projectile.apply_source_style()
 			projectile.global_position = parent.global_position
 			if projectile.has_method("set_direction"):
 				projectile.set_direction(direction)
@@ -95,6 +101,11 @@ func fire_projectile(target_position: Vector2) -> void:
 
 
 func _on_attack_timer_timeout() -> void:
-	if is_attacking and nearest_enemy != null:
+	if not is_attacking:
+		return
+	if nearest_enemy != null:
 		fire_projectile(nearest_enemy.global_position)
-		timer.start()
+	# ALWAYS restart: the timer is one-shot, so skipping start() here when no
+	# enemy is in range kills auto-attack permanently (enemies spawn outside
+	# attack_range, so the first timeout always has no target).
+	timer.start()

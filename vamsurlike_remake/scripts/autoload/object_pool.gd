@@ -43,6 +43,16 @@ func get_object() -> Node2D:
 
 	active_objects.append(obj)
 	obj.visible = true
+	# A node outside the tree never runs _process and its Area2D signals never
+	# fire — it must be in the tree before use, or it is invisible, immobile,
+	# and deals no damage.
+	if obj.get_parent() == null:
+		var tree := get_tree()
+		if tree != null:
+			var container := tree.current_scene
+			if container == null:
+				container = tree.root
+			container.add_child(obj)
 	return obj
 
 
@@ -52,6 +62,10 @@ func release_object(obj: Node2D) -> void:
 		active_objects.erase(obj)
 
 	obj.visible = false
+	# Remove from the tree so a hidden (pooled) object stops monitoring —
+	# visible=false does NOT disable Area2D collision detection.
+	if obj.get_parent() != null:
+		obj.remove_from_parent()
 	pool.append(obj)
 
 

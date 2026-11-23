@@ -17,6 +17,14 @@ var auto_attack: AutoAttack  # reference to AutoAttack component
 func _ready() -> void:
 	add_to_group("player")
 
+	# Collision setup: player lives on layer 1 and collides with NOTHING
+	# (mask 0). Enemies must not physically block the player — a chasing
+	# enemy pushes the player and, with two or more enemies, boxes it in so
+	# it cannot move at all. Contact damage still works because enemies
+	# detect the player's layer (see EnemyAI._check_contact_damage).
+	collision_layer = 1
+	collision_mask = 0
+
 	# Create dummy sprite (blue ColorRect) if no child sprite exists
 	if find_child("Body") == null:
 		var dummy := ColorRect.new()

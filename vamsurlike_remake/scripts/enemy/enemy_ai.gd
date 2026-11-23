@@ -37,6 +37,13 @@ func _ready() -> void:
 	# Add to enemies group so AutoAttack can find them
 	add_to_group("enemies")
 
+	# Collision setup: enemies live on layer 2 and detect ONLY the player
+	# (layer 1). They stop at the player (which is what makes contact damage
+	# via get_last_slide_collision work) but never block the player or each
+	# other.
+	collision_layer = 2
+	collision_mask = 1
+
 	# Auto-discover player reference
 	player_ref = _find_player()
 
@@ -162,6 +169,7 @@ func _fire_projectile(direction: Vector2) -> void:
 		if projectile != null:
 			projectile.global_position = global_position
 			projectile.source_type = "enemy"
+			projectile.apply_source_style()
 			projectile.set_velocity(direction * 300.0)
 			if enemy_data != null:
 				projectile.set_damage(enemy_data.attack)
@@ -175,6 +183,7 @@ func _fire_projectile(direction: Vector2) -> void:
 			container.add_child(projectile)
 			projectile.global_position = global_position
 			projectile.source_type = "enemy"
+			projectile.apply_source_style()
 			projectile.set_velocity(direction * 300.0)
 			if enemy_data != null:
 				projectile.set_damage(enemy_data.attack)
