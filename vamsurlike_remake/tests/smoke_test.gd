@@ -362,21 +362,27 @@ func _test_auto_attack_and_collision() -> void:
 	# 6c. End-to-end: teleport an enemy into attack range and require a real
 	# projectile to appear in the tree within one attack interval, then verify
 	# it actually moves (in-tree _process).
+	# NOTE: headless mode has no vsync — frames run faster than real time, but
+	# the Timer is real-time based. Poll against a wall-clock deadline, not a
+	# frame count, or the window closes before the 1.0s timer can fire.
 	enemy.global_position = player.global_position + Vector2(100, 0)
 	var proj: Node2D = null
-	for i in range(90):  # ~1.5s at 60fps; attack_interval is 1.0s
+	var deadline := Time.get_ticks_msec() + 1600  # > attack_interval (1.0s)
+	while Time.get_ticks_msec() < deadline:
 		await process_frame
 		var live := get_nodes_in_group("projectiles")
 		if not live.is_empty():
 			proj = live[0] as Node2D
 			break
 	if proj == null:
-		failures.append("auto-attack: no projectile entered the tree within 1.5s of an enemy entering range (fire path or pool broken)")
+		failures.append("auto-attack: no projectile entered the tree within 1.6s of an enemy entering range (fire path or pool broken)")
 		return
 	passes.append("auto-attack fired a projectile into the scene tree")
 
 	var p0: Vector2 = proj.global_position
-	for i in range(5):
+	# ~40px at 400px/s; ends well before the shot reaches the enemy (~250ms).
+	var move_deadline := Time.get_ticks_msec() + 100
+	while Time.get_ticks_msec() < move_deadline:
 		await process_frame
 	if is_instance_valid(proj) and proj.global_position.distance_to(p0) > 1.0:
 		passes.append("projectile moves after firing (in-tree, _process running)")
