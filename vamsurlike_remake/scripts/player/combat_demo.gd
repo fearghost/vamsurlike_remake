@@ -48,14 +48,13 @@ func _ready() -> void:
 
 
 func _on_player_died() -> void:
-	print("Player died. Returning to main menu.")
+	print("Player died. Showing game over screen.")
 	var sm := get_node_or_null("/root/SaveManager")
 	var gm := get_node_or_null("/root/GameManager")
 	if sm != null and gm != null:
 		sm.save_data["current_stage"] = gm.current_stage_id
 		sm.save()
-	await get_tree().create_timer(2.0).timeout
-	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
+	get_tree().change_scene_to_file("res://scenes/game/game_over.tscn")
 
 
 func _on_all_waves_cleared() -> void:

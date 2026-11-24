@@ -20,8 +20,8 @@ func _ready() -> void:
 	# Collision setup: player lives on layer 1 and collides with NOTHING
 	# (mask 0). Enemies must not physically block the player — a chasing
 	# enemy pushes the player and, with two or more enemies, boxes it in so
-	# it cannot move at all. Contact damage still works because enemies
-	# detect the player's layer (see EnemyAI._check_contact_damage).
+	# it cannot move at all. Contact damage is distance-based on the enemy
+	# side (see EnemyAI._check_contact_damage), not collision-driven.
 	collision_layer = 1
 	collision_mask = 0
 
@@ -53,6 +53,10 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	velocity = current_direction * move_speed
 	move_and_slide()
+
+	# Keep the player inside the map — no walking off into the void.
+	var margin := 18.0  # player collision radius
+	global_position = global_position.clamp(Vector2(margin, margin), MapConfig.MAP_SIZE - Vector2(margin, margin))
 
 
 func set_input_direction(direction: Vector2) -> void:

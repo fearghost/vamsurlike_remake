@@ -15,23 +15,32 @@ var velocity: Vector2 = Vector2.ZERO
 func _ready() -> void:
 	add_to_group("projectiles")
 
-	# Detect both the player (layer 1) and enemies (layer 2). Areas never
-	# participate in physical collision, so layer 0 is fine.
+	# Areas never participate in physical collision, so layer 0 is fine.
 	collision_layer = 0
-	collision_mask = 3
 
 	apply_source_style()
 
+	# Connect explicitly (guarded) instead of relying on the _on_body_entered
+	# auto-connection: pooled projectiles are removed from and re-added to the
+	# tree, which made the automatic connection unreliable — hits were lost.
+	if not body_entered.is_connected(_handle_body_entered):
+		body_entered.connect(_handle_body_entered as Callable)
 
-## (Re)applies the sprite color for the current source_type. Called after
-## source_type changes — pooled projectiles are reused, and _ready only runs
-## on first tree entry, so the style must be re-applied on every acquire.
+
+## (Re)applies the sprite color and collision mask for the current source_type.
+## Called after source_type changes — pooled projectiles are reused, and _ready
+## only runs on first tree entry, so both must be re-applied every acquire.
 func apply_source_style() -> void:
 	var sprite := find_child("Sprite")
-	if sprite is ColorRect:
-		if source_type == "player":
+	if source_type == "player":
+		# Player shots only ever hit enemies (layer 2) — never the player itself.
+		collision_mask = 2
+		if sprite is ColorRect:
 			(sprite as ColorRect).color = Color(1, 1, 0, 1)       # Yellow for player
-		else:
+	else:
+		# Enemy shots only ever hit the player (layer 1) — never other enemies.
+		collision_mask = 1
+		if sprite is ColorRect:
 			(sprite as ColorRect).color = Color(1, 0.5, 0, 1)      # Orange for enemy
 
 
@@ -44,14 +53,15 @@ func set_velocity(dir: Vector2) -> void:
 
 
 func set_direction(dir: Vector2) -> void:
-	velocity = dir.normalized() * speed
+	velocity = (dir.normalized() if dir.length() > 0.001 else Vector2.RIGHT) * speed
 
 
+## Legacy alias kept for callers that still use the old name.
 func set_damage(amount: int) -> void:
 	damage = amount
 
 
-func _on_body_entered(body: Node) -> void:
+func _handle_body_entered(body: Node) -> void:
 	# Group/method checks instead of `is EnemyAI` / `is PlayerStats`: type
 	# references force GDScript to compile those classes at load time, which
 	# created a circular dependency (projectile.gd -> enemy_ai.gd -> ...).
@@ -60,16 +70,14 @@ func _on_body_entered(body: Node) -> void:
 			body.take_damage(damage)
 		_on_destroyed()
 	elif source_type == "enemy":
-		# Check if body is the player via group membership
 		if body.is_in_group("player"):
 			var stats := body.get_node_or_null("PlayerStats")
 			if stats != null and stats.has_method("take_damage"):
 				stats.take_damage(damage)
-			_on_destroyed()
+		_on_destroyed()
 
 
 func _on_destroyed() -> void:
-	# Try to release back to PoolManager
 	var pool_manager := get_tree().get_first_node_in_group("pool_manager")
 	if pool_manager != null and pool_manager.has_method("release"):
 		pool_manager.release("projectile", self)

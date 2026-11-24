@@ -338,16 +338,27 @@ func _test_auto_attack_and_collision() -> void:
 		return
 
 	# 6a. Player must not be physically blocked by enemies (stuck bug), while
-	# enemies must still detect the player for contact damage.
+	# contact damage is now distance-based (no physical body overlap needed).
 	var enemy := enemies[0] as Node2D
 	if player.collision_mask & enemy.collision_layer != 0:
 		failures.append("collision: player mask %d includes enemy layer %d — enemies physically block the player (stuck-on-contact bug)" % [player.collision_mask, enemy.collision_layer])
 	else:
 		passes.append("player does not collide with enemies (no stuck-on-contact)")
-	if enemy.collision_mask & player.collision_layer == 0:
-		failures.append("collision: enemy mask %d does not include player layer %d — contact damage would never trigger" % [enemy.collision_mask, player.collision_layer])
+	if enemy.collision_mask != 0:
+		failures.append("collision: enemy mask %d — enemies must not physically detect the player (distance-based contact damage instead)" % [enemy.collision_mask])
 	else:
-		passes.append("enemies still detect the player (contact damage intact)")
+		passes.append("enemies do not physically collide with the player")
+
+	# 6a2. Distance-based contact damage must actually trigger when an enemy is in range.
+	var stats := player.get_node_or_null("PlayerStats")
+	if stats != null:
+		var hp_before: int = stats.current_hp
+		enemy.global_position = player.global_position + Vector2(10, 0)
+		enemy._check_contact_damage()
+		if stats.current_hp < hp_before:
+			passes.append("distance-based contact damage triggers when an enemy is in range")
+		else:
+			failures.append("collision: distance-based contact damage did NOT reduce player HP (still %d)" % stats.current_hp)
 
 	# 6b. The one-shot attack timer must restart even when no enemy is in
 	# range — otherwise the first empty timeout kills auto-attack forever.

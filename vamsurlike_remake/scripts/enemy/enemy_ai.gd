@@ -30,6 +30,8 @@ var is_alive: bool = true
 # Contact attack state (damage dealt when the player touches this enemy)
 var last_contact_hit_time: float = -999.0
 const CONTACT_HIT_COOLDOWN: float = 0.8
+# Distance at which contact damage triggers — sum of enemy (16px) and player (18px) radii.
+const CONTACT_RADIUS: float = 34.0
 
 signal died
 
@@ -37,12 +39,12 @@ func _ready() -> void:
 	# Add to enemies group so AutoAttack can find them
 	add_to_group("enemies")
 
-	# Collision setup: enemies live on layer 2 and detect ONLY the player
-	# (layer 1). They stop at the player (which is what makes contact damage
-	# via get_last_slide_collision work) but never block the player or each
-	# other.
+	# Collision setup: enemies live on layer 2 but detect NOTHING (mask 0).
+	# They never physically collide with the player or each other — contact
+	# damage is distance-based instead, so chasing enemies pass through the
+	# player without sticking to them.
 	collision_layer = 2
-	collision_mask = 1
+	collision_mask = 0
 
 	# Auto-discover player reference
 	player_ref = _find_player()
@@ -100,8 +102,12 @@ func _process(delta: float) -> void:
 		"charge":
 			_ai_charge(delta)
 
-	# Contact damage (CharacterBody2D has no body_entered signal — use the
-	# last slide collision from this frame's move_and_slide() instead).
+	# Keep enemies inside the map — charge state can push past the edge.
+	var margin := 16.0
+	global_position = global_position.clamp(Vector2(margin, margin), MapConfig.MAP_SIZE - Vector2(margin, margin))
+
+	# Contact damage is distance-based (enemies no longer physically collide
+	# with the player — mask 0) so chasing enemies pass through without sticking.
 	_check_contact_damage()
 
 func _ai_chase(delta: float) -> void:
@@ -210,26 +216,18 @@ func _on_defeated() -> void:
 
 
 func _check_contact_damage() -> void:
-	if not is_alive:
+	if not is_alive or player_ref == null:
 		return
-	var col := get_last_slide_collision()
-	if col == null:
+	var distance := global_position.distance_to(player_ref.global_position)
+	if distance > CONTACT_RADIUS:
 		return
-	# Cast immediately: get_collider() returns Object, and dynamic calls on an
-	# Object-typed value yield Variant (breaks `:=` inference downstream).
-	var body := col.get_collider() as Node
-	if body == null or not body.is_in_group("player"):
-		return
-
 	# Cooldown so one enemy can't re-trigger every frame while in contact.
 	var now := Time.get_ticks_msec() / 1000.0
 	if now - last_contact_hit_time < CONTACT_HIT_COOLDOWN:
 		return
 	last_contact_hit_time = now
 
-	# Group/method checks (project convention — same pattern as projectile.gd;
-	# static type references create circular class dependencies at load time).
-	var stats := body.get_node_or_null("PlayerStats")
+	var stats := player_ref.get_node_or_null("PlayerStats")
 	if stats == null or not stats.has_method("take_damage"):
 		return
 
