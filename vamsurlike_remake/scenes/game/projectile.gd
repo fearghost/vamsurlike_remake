@@ -19,9 +19,13 @@ const LIFETIME: float = 3.0
 var _lifetime: float = LIFETIME
 
 
-func _ready() -> void:
+## Runs on EVERY tree entry (including re-acquire from the pool, where _ready
+## does not re-run), so group membership always reflects live shots only.
+func _enter_tree() -> void:
 	add_to_group("projectiles")
 
+
+func _ready() -> void:
 	# Areas never participate in physical collision, so layer 0 is fine.
 	collision_layer = 0
 
@@ -92,6 +96,9 @@ func _handle_body_entered(body: Node) -> void:
 
 
 func _on_destroyed() -> void:
+	# Leave the group immediately so get_nodes_in_group("projectiles") only
+	# ever reports live shots (released/pooled nodes stay out of the tree).
+	remove_from_group("projectiles")
 	var pool_manager := get_tree().get_first_node_in_group("pool_manager")
 	if pool_manager != null and pool_manager.has_method("release"):
 		pool_manager.release("projectile", self)

@@ -58,6 +58,7 @@ func _run_tests() -> void:
 	await _test_auto_attack_and_collision()
 	await _test_camera_keeps_player_in_view()
 	await _test_wave_respawns_enemies()
+	await _test_pooled_projectile_released_from_tree()
 	_print_summary()
 
 
@@ -499,6 +500,43 @@ func _test_wave_respawns_enemies() -> void:
 		# timeout handler actually spawns (the old bug left the queue
 		# non-empty forever after enemy #1).
 		passes.append("spawn queue fully drained — every queued enemy of the current wave was spawned")
+	await process_frame
+
+
+## Phase 9: pooled projectile release. ObjectPool.release_object must remove the
+## node from the tree (remove_from_scene) — a released shot that stays in the
+## tree keeps running _physics_process and its Area2D, so "dead" bullets keep
+## flying and dealing damage forever (and leak RIDs at exit).
+func _test_pooled_projectile_released_from_tree() -> void:
+	print("--- Phase 9: pooled projectile leaves the tree after lifetime expiry ---")
+	var pm := get_tree().get_first_node_in_group("pool_manager")
+	if pm == null or not pm.has_method("acquire"):
+		failures.append("pool release: PoolManager missing — skipped")
+		return
+
+	var p: Projectile = pm.acquire("projectile") as Projectile
+	if p == null:
+		failures.append("pool release: acquire('projectile') returned null")
+		printerr("[FAIL] pool release: acquire returned null")
+		return
+
+	p.source_type = "player"
+	p.apply_source_style()
+	p.global_position = Vector2(100.0, 100.0)
+	p.set_velocity(Vector2.RIGHT * 400.0)
+	await process_frame
+
+	# Lifetime is 3s; allow margin. (It may also be destroyed early by hitting
+	# an enemy — either way it must leave the tree.)
+	var deadline := Time.get_ticks_msec() + 4000
+	while p.is_inside_tree() and Time.get_ticks_msec() < deadline:
+		await process_frame
+
+	if not p.is_inside_tree():
+		passes.append("pooled projectile removed from the tree after expiry (release works)")
+	else:
+		failures.append("pool release: projectile still in the tree 4s after firing — release_object does not remove it (dead bullets keep flying/colliding)")
+		printerr("[FAIL] pool release: projectile still in tree")
 	await process_frame
 
 

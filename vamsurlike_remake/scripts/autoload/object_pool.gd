@@ -65,7 +65,7 @@ func release_object(obj: Node2D) -> void:
 	# Remove from the tree so a hidden (pooled) object stops monitoring —
 	# visible=false does NOT disable Area2D collision detection.
 	if obj.get_parent() != null:
-		obj.remove_from_parent()
+		obj.remove_from_scene()
 	pool.append(obj)
 
 
