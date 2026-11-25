@@ -427,7 +427,7 @@ func _test_camera_keeps_player_in_view() -> void:
 	var vp_size := camera.get_viewport().get_visible_rect().size
 	if vp_size.x <= 0.0 or vp_size.y <= 0.0:
 		vp_size = Vector2(1280.0, 720.0)  # same fallback as MapCamera
-	var half := (vp_size * 0.5) / camera.zoom
+	var half: Vector2 = (vp_size * 0.5) / (camera.zoom as Vector2)
 
 	var map_size := Vector2(2560.0, 1440.0)
 	var corners := [
@@ -481,7 +481,7 @@ func _test_wave_respawns_enemies() -> void:
 	while not get_nodes_in_group("projectiles").is_empty() and Time.get_ticks_msec() < clear_deadline:
 		await process_frame
 
-	var wave := spawner.wave_data[spawner.current_wave]
+	var wave: Dictionary = spawner.wave_data[spawner.current_wave]
 	if not wave["enemies"].is_empty():
 		# Queue still has enemies — the timeout handler must spawn one now.
 		var before := get_nodes_in_group("enemies").size()
