@@ -405,11 +405,24 @@ func _test_auto_attack_and_collision() -> void:
 	# attack interval plus headless timing jitter; movement is detected via
 	# wall-clock polling, not frame counts (headless frames run faster than
 	# real time and physics ticks are decoupled from rendered frames).
-	var move_deadline := Time.get_ticks_msec() + 2000
+	var move_start := Time.get_ticks_msec()
+	var move_deadline := move_start + 2000
 	var baseline: Dictionary = {}   # node -> Vector2 last-seen position
 	var moved := false
+	var iter_count := 0
 	while not moved and Time.get_ticks_msec() < move_deadline:
 		await process_frame
+		iter_count += 1
+		if iter_count <= 12 or (iter_count % 500 == 0):
+			var diag := "[6c-diag] it=%d wall=%dms live=%d" % [iter_count, Time.get_ticks_msec() - move_start, get_nodes_in_group("projectiles").size()]
+			for n in get_nodes_in_group("projectiles"):
+				var p := (n as Node2D).global_position
+				var delta_str := "-1.0"
+				if baseline.has(n):
+					var prev: Vector2 = baseline[n]
+					delta_str = "%.2f" % p.distance_to(prev)
+				diag += " | node=%s pos=(%.1f,%.1f) delta=%s" % [str(n.name), p.x, p.y, delta_str]
+			print(diag)
 		var live_now: Dictionary = {}
 		for n in get_nodes_in_group("projectiles"):
 			live_now[n] = true
