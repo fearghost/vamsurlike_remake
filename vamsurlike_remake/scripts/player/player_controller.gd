@@ -50,7 +50,12 @@ func _ready() -> void:
 		auto_attack = $AutoAttack if has_node("AutoAttack") else null
 
 
-func _process(delta: float) -> void:
+## Movement runs in _physics_process (NOT _process): move_and_slide() must be
+## called on the physics tick. In _process the step size is tied to the RENDER
+## frame rate, so on a device whose FPS drops under combat load the player
+## crawls/freezes and then speeds back up — the on-device "controls stop
+## working, stutters, then moves again" bug.
+func _physics_process(delta: float) -> void:
 	velocity = current_direction * move_speed
 	move_and_slide()
 

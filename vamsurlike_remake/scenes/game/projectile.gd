@@ -11,6 +11,13 @@ extends Area2D
 
 var velocity: Vector2 = Vector2.ZERO
 
+# Max time a projectile may live before self-destructing. Missed shots used to
+# fly forever and accumulate in the scene tree — dozens of live Area2Ds add
+# physics cost every tick, which drags down FPS on mobile (stutter). 3s is
+# far more than any shot needs (max engagement distance ~300px at 300-400px/s).
+const LIFETIME: float = 3.0
+var _lifetime: float = LIFETIME
+
 
 func _ready() -> void:
 	add_to_group("projectiles")
@@ -44,16 +51,23 @@ func apply_source_style() -> void:
 			(sprite as ColorRect).color = Color(1, 0.5, 0, 1)      # Orange for enemy
 
 
-func _process(delta: float) -> void:
+## _physics_process (not _process) so bullet speed is constant regardless of
+## the device's render frame rate.
+func _physics_process(delta: float) -> void:
 	position += velocity * delta
+	_lifetime -= delta
+	if _lifetime <= 0.0:
+		_on_destroyed()
 
 
 func set_velocity(dir: Vector2) -> void:
 	velocity = dir.normalized() * speed
+	_lifetime = LIFETIME  # pooled projectiles keep stale state — reset on acquire
 
 
 func set_direction(dir: Vector2) -> void:
 	velocity = (dir.normalized() if dir.length() > 0.001 else Vector2.RIGHT) * speed
+	_lifetime = LIFETIME
 
 
 ## Legacy alias kept for callers that still use the old name.

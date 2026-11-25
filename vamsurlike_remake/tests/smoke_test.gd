@@ -56,6 +56,8 @@ func _run_tests() -> void:
 	await _test_joystick_movement()
 	await _test_enemy_spawning()
 	await _test_auto_attack_and_collision()
+	await _test_camera_keeps_player_in_view()
+	await _test_wave_respawns_enemies()
 	_print_summary()
 
 
@@ -251,7 +253,11 @@ func _direct_gui_input_check(player: Node, joystick: Control, start_pos: Vector2
 	joystick._gui_input(_make_touch(300.0, 500.0, true))
 	await process_frame
 	joystick._gui_input(_make_drag(380.0, 500.0))
-	for i in range(20):
+	# Movement happens in _physics_process (60Hz real-time ticks even in
+	# headless), so poll against a wall-clock deadline — a fixed frame count
+	# can close before the first physics tick lands (headless has no vsync).
+	var deadline := Time.get_ticks_msec() + 300
+	while Time.get_ticks_msec() < deadline:
 		await process_frame
 		if player.global_position != start_pos:
 			joystick._gui_input(_make_touch(380.0, 500.0, false))
@@ -399,6 +405,101 @@ func _test_auto_attack_and_collision() -> void:
 		passes.append("projectile moves after firing (in-tree, _process running)")
 	else:
 		failures.append("projectile did not move after firing (not in tree / _process dead)")
+
+
+## Phase 7: the on-device "blue box disappears off-screen" bug. The camera must
+## follow the player and clamp at the map edges so the player stays inside the
+## visible viewport rect even when standing at a map corner.
+func _test_camera_keeps_player_in_view() -> void:
+	print("--- Phase 7: camera keeps the player in view at map corners ---")
+	var cs := current_scene
+	if cs == null or not cs.name.to_lower().contains("combat"):
+		failures.append("camera: combat scene not active — skipped")
+		return
+
+	var player := cs.get_node_or_null("Player")
+	var camera := cs.get_node_or_null("MapCamera")
+	if player == null or camera == null:
+		failures.append("camera: Player or MapCamera missing from combat scene")
+		printerr("[FAIL] camera: nodes missing (player=%s, camera=%s)" % [str(player), str(camera)])
+		return
+
+	var vp_size := camera.get_viewport().get_visible_rect().size
+	if vp_size.x <= 0.0 or vp_size.y <= 0.0:
+		vp_size = Vector2(1280.0, 720.0)  # same fallback as MapCamera
+	var half := (vp_size * 0.5) / camera.zoom
+
+	var map_size := Vector2(2560.0, 1440.0)
+	var corners := [
+		Vector2(18.0, 18.0),
+		map_size - Vector2(18.0, 18.0),
+		Vector2(18.0, map_size.y - 18.0),
+		Vector2(map_size.x - 18.0, 18.0),
+	]
+	var bad := 0
+	for corner in corners:
+		player.global_position = corner
+		await process_frame
+		await process_frame
+		var cam_pos: Vector2 = camera.global_position
+		var p: Vector2 = player.global_position
+		if absf(p.x - cam_pos.x) > half.x + 1.0 or absf(p.y - cam_pos.y) > half.y + 1.0:
+			bad += 1
+			failures.append("camera: player at map corner %s is OUTSIDE the visible rect (camera %s, half-viewport %s)" % [str(corner), str(cam_pos), str(half)])
+			printerr("[FAIL] camera: player off-screen at corner %s" % str(corner))
+	if bad == 0:
+		passes.append("camera keeps the player in view at all four map corners")
+	await process_frame
+
+
+## Phase 8: the on-device "enemies don't respawn" bug. The spawn timer's
+## timeout handler must actually SPAWN the next queued enemy — the old code
+## only restarted the timer, so each wave produced exactly one enemy and the
+## alive-counter never reached zero (no wave ever cleared).
+func _test_wave_respawns_enemies() -> void:
+	print("--- Phase 8: spawn timer timeout spawns the next queued enemy ---")
+	var cs := current_scene
+	if cs == null or not cs.name.to_lower().contains("combat"):
+		failures.append("respawn: combat scene not active — skipped")
+		return
+
+	var spawner := cs.get_node_or_null("Spawner")
+	if spawner == null:
+		failures.append("respawn: Spawner missing from combat scene")
+		printerr("[FAIL] respawn: no Spawner node")
+		return
+
+	# Stop auto-attack so freshly spawned enemies can't be killed mid-check.
+	var player := cs.get_node_or_null("Player")
+	var auto_attack := player.get_node_or_null("AutoAttack") if player != null else null
+	if auto_attack != null:
+		auto_attack.is_attacking = false
+
+	# Wait for in-flight projectiles from earlier phases to expire (3s
+	# lifetime) so one can't kill an enemy between the before/after counts.
+	var clear_deadline := Time.get_ticks_msec() + 4000
+	while not get_nodes_in_group("projectiles").is_empty() and Time.get_ticks_msec() < clear_deadline:
+		await process_frame
+
+	var wave := spawner.wave_data[spawner.current_wave]
+	if not wave["enemies"].is_empty():
+		# Queue still has enemies — the timeout handler must spawn one now.
+		var before := get_nodes_in_group("enemies").size()
+		spawner._on_spawn_timer_timeout()
+		await process_frame
+		await process_frame
+		var after := get_nodes_in_group("enemies").size()
+		if after == before + 1:
+			passes.append("spawn timer timeout spawned the next queued enemy (%d -> %d)" % [before, after])
+		else:
+			failures.append("respawn: enemy count did not increase after spawn-timer timeout (%d -> %d) — enemies never respawn" % [before, after])
+			printerr("[FAIL] respawn: %d -> %d" % [before, after])
+	else:
+		# Queue already drained by the real timer — that only happens if the
+		# timeout handler actually spawns (the old bug left the queue
+		# non-empty forever after enemy #1).
+		passes.append("spawn queue fully drained — every queued enemy of the current wave was spawned")
+	await process_frame
 
 
 func _print_summary() -> void:

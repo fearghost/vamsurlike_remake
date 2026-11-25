@@ -90,7 +90,10 @@ func _has_collision_shape() -> bool:
 			return true
 	return false
 
-func _process(delta: float) -> void:
+## AI runs in _physics_process (NOT _process): move_and_slide() must be called
+## on the physics tick, otherwise enemy speed is tied to the render frame rate
+## and stutters whenever the device's FPS drops under load.
+func _physics_process(delta: float) -> void:
 	if not is_alive or player_ref == null:
 		return
 

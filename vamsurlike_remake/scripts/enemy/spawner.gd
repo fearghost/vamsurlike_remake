@@ -128,10 +128,17 @@ func _on_spawn_timer_timeout() -> void:
 		is_waving_active = false
 		return
 
-	# Wait for the configured interval before spawning next enemy
-	var spawn_interval := wave.get("spawn_interval", 1.0) as float
-	spawn_timer.wait_time = spawn_interval
-	spawn_timer.start()
+	# Spawn the next enemy in the queue. (The old code only restarted the
+	# timer here and never spawned — so every wave produced exactly one
+	# enemy, _enemies_alive never reached 0, and no wave ever "cleared":
+	# the on-device "enemies don't respawn" bug.)
+	_spawn_next_enemy(wave)
+
+	# Keep spawning until the queue is empty.
+	if not wave["enemies"].is_empty():
+		var spawn_interval := wave.get("spawn_interval", 1.0) as float
+		spawn_timer.wait_time = spawn_interval
+		spawn_timer.start()
 
 
 func _on_enemy_died() -> void:

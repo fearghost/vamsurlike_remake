@@ -77,6 +77,12 @@ jobs:
             --import \
             --quit
 
+      - name: Run headless smoke test
+        run: |
+          ./Godot_v4.3-stable_linux.x86_64 --headless \
+            --path vamsurlike_remake \
+            -s tests/smoke_test.gd
+
       - name: Build Android APK (Debug)
         run: |
           PROJECT_DIR="$(pwd)/vamsurlike_remake"
