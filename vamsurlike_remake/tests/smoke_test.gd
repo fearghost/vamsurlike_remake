@@ -397,12 +397,23 @@ func _test_auto_attack_and_collision() -> void:
 		return
 	passes.append("auto-attack fired a projectile into the scene tree")
 
-	var p0: Vector2 = proj.global_position
-	# ~40px at 400px/s; ends well before the shot reaches the enemy (~250ms).
-	var move_deadline := Time.get_ticks_msec() + 100
-	while Time.get_ticks_msec() < move_deadline:
+	# Verify at least one live projectile actually moves. We do NOT track
+	# `proj` individually: it may be an older shot near the end of its 3s
+	# lifetime that expires (and is released out of the tree) mid-window —
+	# a false failure even though the fire path works fine.
+	var pos_before: Dictionary = {}
+	for n in get_nodes_in_group("projectiles"):
+		pos_before[n] = (n as Node2D).global_position
+	var move_deadline := Time.get_ticks_msec() + 150
+	var moved := false
+	while not moved and Time.get_ticks_msec() < move_deadline:
 		await process_frame
-	if is_instance_valid(proj) and proj.global_position.distance_to(p0) > 1.0:
+		for n in get_nodes_in_group("projectiles"):
+			if pos_before.has(n) and is_instance_valid(n):
+				if (n as Node2D).global_position.distance_to(pos_before[n]) > 1.0:
+					moved = true
+					break
+	if moved:
 		passes.append("projectile moves after firing (in-tree, _process running)")
 	else:
 		failures.append("projectile did not move after firing (not in tree / _process dead)")

@@ -43,10 +43,16 @@ func get_object() -> Node2D:
 
 	active_objects.append(obj)
 	obj.visible = true
-	# A node outside the tree never runs _process and its Area2D signals never
-	# fire — it must be in the tree before use, or it is invisible, immobile,
-	# and deals no damage.
-	if obj.get_parent() == null:
+	var parent := obj.get_parent()
+	if parent != null:
+		# Still in the tree because a previous release's deferred remove_child
+		# has not run yet. Cancel it — this object is active again, and the
+		# pending removal would yank it out of the tree at end of frame.
+		parent.remove_call_deferred("remove_child", [obj])
+	else:
+		# A node outside the tree never runs _process and its Area2D signals
+		# never fire — it must be in the tree before use, or it is invisible,
+		# immobile, and deals no damage.
 		var tree := get_tree()
 		if tree != null:
 			var container := tree.current_scene
@@ -58,6 +64,12 @@ func get_object() -> Node2D:
 
 ## Returns an [param obj] to the pool, marking it as inactive and hiding it.
 func release_object(obj: Node2D) -> void:
+	# Double-release guard: _on_destroyed can fire twice for one shot (e.g.
+	# body_entered and lifetime expiry in the same frame). Without this the
+	# object would be appended to the pool twice and two deferred removals
+	# would be scheduled for it.
+	if pool.has(obj):
+		return
 	if active_objects.has(obj):
 		active_objects.erase(obj)
 
@@ -66,9 +78,12 @@ func release_object(obj: Node2D) -> void:
 	# visible=false does NOT disable Area2D collision detection.
 	if obj.get_parent() != null:
 		# Godot 4 has no remove_from_scene()/remove_from_parent() — the parent
-		# must remove the child. (Both "convenient" names are Godot 3 / non-API
-		# and raise a script error, silently leaving the node in the tree.)
-		obj.get_parent().remove_child(obj)
+		# must remove the child. And release_object is often called from a
+		# physics callback (Area2D body_entered / _physics_process lifetime),
+		# where removing a CollisionObject immediately is NOT allowed — it
+		# corrupts physics server state. call_deferred defers the removal to
+		# end of frame, after the physics step completes.
+		obj.get_parent().call_deferred("remove_child", obj)
 	pool.append(obj)
 
 
