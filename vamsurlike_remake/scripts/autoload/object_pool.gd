@@ -65,7 +65,10 @@ func release_object(obj: Node2D) -> void:
 	# Remove from the tree so a hidden (pooled) object stops monitoring —
 	# visible=false does NOT disable Area2D collision detection.
 	if obj.get_parent() != null:
-		obj.remove_from_scene()
+		# Godot 4 has no remove_from_scene()/remove_from_parent() — the parent
+		# must remove the child. (Both "convenient" names are Godot 3 / non-API
+		# and raise a script error, silently leaving the node in the tree.)
+		obj.get_parent().remove_child(obj)
 	pool.append(obj)
 
 
