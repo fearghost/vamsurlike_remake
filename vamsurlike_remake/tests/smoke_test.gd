@@ -509,7 +509,7 @@ func _test_wave_respawns_enemies() -> void:
 ## flying and dealing damage forever (and leak RIDs at exit).
 func _test_pooled_projectile_released_from_tree() -> void:
 	print("--- Phase 9: pooled projectile leaves the tree after lifetime expiry ---")
-	var pm := get_tree().get_first_node_in_group("pool_manager")
+	var pm: Node = get_first_node_in_group("pool_manager")
 	if pm == null or not pm.has_method("acquire"):
 		failures.append("pool release: PoolManager missing — skipped")
 		return
