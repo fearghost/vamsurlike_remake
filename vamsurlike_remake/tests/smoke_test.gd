@@ -397,22 +397,34 @@ func _test_auto_attack_and_collision() -> void:
 		return
 	passes.append("auto-attack fired a projectile into the scene tree")
 
-	# Verify at least one live projectile actually moves. We do NOT track
-	# `proj` individually: it may be an older shot near the end of its 3s
-	# lifetime that expires (and is released out of the tree) mid-window —
-	# a false failure even though the fire path works fine.
-	var pos_before: Dictionary = {}
-	for n in get_nodes_in_group("projectiles"):
-		pos_before[n] = (n as Node2D).global_position
-	var move_deadline := Time.get_ticks_msec() + 150
+	# Verify at least one live projectile actually moves. Track each node by
+	# identity with a fresh baseline on first sighting — a re-acquired shot is
+	# teleported to the player's position, which must NOT count as "moving".
+	# Baselines for nodes that left the group (died/released) are dropped so
+	# reuse can never produce a stale comparison. Deadline ~2s covers one full
+	# attack interval plus headless timing jitter; movement is detected via
+	# wall-clock polling, not frame counts (headless frames run faster than
+	# real time and physics ticks are decoupled from rendered frames).
+	var move_deadline := Time.get_ticks_msec() + 2000
+	var baseline: Dictionary = {}   # node -> Vector2 last-seen position
 	var moved := false
 	while not moved and Time.get_ticks_msec() < move_deadline:
 		await process_frame
+		var live_now: Dictionary = {}
 		for n in get_nodes_in_group("projectiles"):
-			if pos_before.has(n) and is_instance_valid(n):
-				if (n as Node2D).global_position.distance_to(pos_before[n]) > 1.0:
-					moved = true
-					break
+			live_now[n] = true
+		var stale: Array = []
+		for k in baseline.keys():
+			if not live_now.has(k):
+				stale.append(k)
+		for k in stale:
+			baseline.erase(k)
+		for n in get_nodes_in_group("projectiles"):
+			var p := (n as Node2D).global_position
+			if baseline.has(n) and p.distance_to(baseline[n]) > 1.0:
+				moved = true
+				break
+			baseline[n] = p
 	if moved:
 		passes.append("projectile moves after firing (in-tree, _process running)")
 	else:
