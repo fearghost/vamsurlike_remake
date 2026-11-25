@@ -383,6 +383,14 @@ func _test_auto_attack_and_collision() -> void:
 	# NOTE: headless mode has no vsync — frames run faster than real time, but
 	# the Timer is real-time based. Poll against a wall-clock deadline, not a
 	# frame count, or the window closes before the 1.0s timer can fire.
+	# Teleport ALL enemies far away first — a chasing enemy (or one spawned by
+	# the stagger timer mid-phase) could otherwise sit within attack range and
+	# either be picked as nearest_enemy or be hit instantly, killing the shot
+	# before it can ever move. Then place our target at +100px so exactly one
+	# enemy is in range.
+	var all_enemies := get_nodes_in_group("enemies")
+	for e in all_enemies:
+		(e as Node2D).global_position = player.global_position + Vector2(5000, 0)
 	enemy.global_position = player.global_position + Vector2(100, 0)
 	var proj: Node2D = null
 	var deadline := Time.get_ticks_msec() + 1600  # > attack_interval (1.0s)
@@ -409,20 +417,8 @@ func _test_auto_attack_and_collision() -> void:
 	var move_deadline := move_start + 2000
 	var baseline: Dictionary = {}   # node -> Vector2 last-seen position
 	var moved := false
-	var iter_count := 0
 	while not moved and Time.get_ticks_msec() < move_deadline:
 		await process_frame
-		iter_count += 1
-		if iter_count <= 12 or (iter_count % 500 == 0):
-			var diag := "[6c-diag] it=%d wall=%dms live=%d" % [iter_count, Time.get_ticks_msec() - move_start, get_nodes_in_group("projectiles").size()]
-			for n in get_nodes_in_group("projectiles"):
-				var p := (n as Node2D).global_position
-				var delta_str := "-1.0"
-				if baseline.has(n):
-					var prev: Vector2 = baseline[n]
-					delta_str = "%.2f" % p.distance_to(prev)
-				diag += " | node=%s pos=(%.1f,%.1f) delta=%s" % [str(n.name), p.x, p.y, delta_str]
-			print(diag)
 		var live_now: Dictionary = {}
 		for n in get_nodes_in_group("projectiles"):
 			live_now[n] = true
