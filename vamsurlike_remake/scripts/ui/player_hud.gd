@@ -2,14 +2,33 @@ class_name PlayerHud
 extends CanvasLayer
 
 
-## HUD overlay showing player HP bar and current stage number.
+## HUD overlay showing player HP bar, stage number, level and XP progress.
 
 
 @onready var hp_bar: TextureProgressBar = $HPBar
 @onready var stage_label: Label = $StageLabel
 
+var level_label: Label = null
+var xp_bar: TextureProgressBar = null
+
 
 func _ready() -> void:
+	# Build the XP bar + level label under the stage label (built in code so no
+	# scene file needs to be kept in sync with the layout)
+	level_label = Label.new()
+	level_label.name = "LevelLabel"
+	level_label.text = "Lv 1"
+	level_label.position = Vector2(20, 64)
+	add_child(level_label)
+
+	xp_bar = TextureProgressBar.new()
+	xp_bar.name = "XPBar"
+	xp_bar.min_value = 0
+	xp_bar.max_value = 100
+	xp_bar.position = Vector2(20, 88)
+	xp_bar.size = Vector2(300, 12)
+	add_child(xp_bar)
+
 	# Connect to the PlayerStats node if it exists in the tree
 	var player_stats := _find_player_stats()
 	if player_stats != null:
@@ -17,6 +36,8 @@ func _ready() -> void:
 			player_stats.hp_changed.connect(update_hp)
 		if not player_stats.died.is_connected(_on_player_died):
 			player_stats.died.connect(_on_player_died)
+		if not player_stats.xp_changed.is_connected(update_xp):
+			player_stats.xp_changed.connect(update_xp)
 
 	# Connect to GameManager for stage updates
 	var gm := get_node_or_null("/root/GameManager")
@@ -53,6 +74,14 @@ func update_hp(current: int, max_hp_value: int) -> void:
 	if hp_bar != null:
 		hp_bar.max_value = max_hp_value
 		hp_bar.value = current
+
+
+func update_xp(current: int, needed: int, level: int) -> void:
+	if xp_bar != null:
+		xp_bar.max_value = max(1, needed)
+		xp_bar.value = current
+	if level_label != null:
+		level_label.text = "Lv %d" % level
 
 
 func update_stage(stage_id: int) -> void:

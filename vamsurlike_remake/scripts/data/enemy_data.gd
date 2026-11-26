@@ -8,5 +8,6 @@ extends Resource
 @export var defense: int = 2
 @export var speed: float = 80.0
 @export var ai_pattern: String = "chase"  # "chase", "ranged", "charge"
+@export var xp_value: int = 10  # XP granted when this enemy is defeated
 @export var drop_table: Array[Dictionary] = []
 @export var sprite_path: String = ""

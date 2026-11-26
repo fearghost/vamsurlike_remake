@@ -11,3 +11,4 @@ attack = 8
 defense = 1
 speed = 40.0
 ai_pattern = "ranged"
+xp_value = 20

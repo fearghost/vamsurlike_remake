@@ -17,13 +17,6 @@ func transition_to_combat() -> void:
 	get_tree().change_scene_to_file("res://scenes/game/combat_demo.tscn")
 
 
-func transition_to_upgrade() -> void:
-	var gm := _get_game_manager()
-	if gm != null and gm.has_method("change_state"):
-		gm.change_state(3)  # UPGRADE
-	get_tree().change_scene_to_file("res://scenes/game/upgrade_screen.tscn")
-
-
 func transition_to_main_menu() -> void:
 	var gm := _get_game_manager()
 	if gm != null and gm.has_method("change_state"):

@@ -11,3 +11,4 @@ attack = 12
 defense = 3
 speed = 120.0
 ai_pattern = "charge"
+xp_value = 30

@@ -320,6 +320,17 @@ func _test_enemy_spawning() -> void:
 		printerr("[FAIL] spawning: 0 enemies in tree")
 
 
+## Dismiss a level-up overlay that fired mid-phase (an enemy was killed by the
+## projectile under test). Simulates the player picking a skill so the tree is
+## not left paused and physics keeps running for the rest of the phase.
+func _dismiss_level_up(cs: Node) -> void:
+	if paused:
+		var ss := cs.get_node_or_null("SkillSelect") if cs != null else null
+		if ss != null and ss.has_method("hide"):
+			ss.hide()
+		paused = false
+
+
 ## Phase 6: the on-device "no attack effect / stuck when touching an enemy"
 ## bugs. Verifies (a) collision layers keep enemies from physically blocking
 ## the player while preserving contact damage, (b) the one-shot auto-attack
@@ -396,6 +407,7 @@ func _test_auto_attack_and_collision() -> void:
 	var deadline := Time.get_ticks_msec() + 1600  # > attack_interval (1.0s)
 	while Time.get_ticks_msec() < deadline:
 		await process_frame
+		_dismiss_level_up(cs)
 		var live := get_nodes_in_group("projectiles")
 		if not live.is_empty():
 			proj = live[0] as Node2D
@@ -419,6 +431,7 @@ func _test_auto_attack_and_collision() -> void:
 	var moved := false
 	while not moved and Time.get_ticks_msec() < move_deadline:
 		await process_frame
+		_dismiss_level_up(cs)
 		var live_now: Dictionary = {}
 		for n in get_nodes_in_group("projectiles"):
 			live_now[n] = true
@@ -438,6 +451,7 @@ func _test_auto_attack_and_collision() -> void:
 		passes.append("projectile moves after firing (in-tree, _process running)")
 	else:
 		failures.append("projectile did not move after firing (not in tree / _process dead)")
+	_dismiss_level_up(cs)
 
 
 ## Phase 7: the on-device "blue box disappears off-screen" bug. The camera must

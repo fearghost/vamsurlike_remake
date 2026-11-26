@@ -214,8 +214,26 @@ func take_damage(amount: int) -> void:
 
 
 func _on_defeated() -> void:
+	# Grant XP to the player for this kill (amount varies by enemy type/strength)
+	# BEFORE emitting died: a level-up may pause the tree and show the skill
+	# overlay, so it must not race with wave-clear handling inside `died`.
+	var stats := _find_player_stats()
+	if stats != null and stats.has_method("gain_xp"):
+		var xp_value := 10
+		if enemy_data != null:
+			xp_value = enemy_data.xp_value
+		stats.gain_xp(xp_value)
 	died.emit()
 	queue_free()
+
+
+func _find_player_stats() -> Node:
+	var player := _find_player()
+	if player == null or not is_instance_valid(player):
+		return null
+	if player.has_method("get_node_or_null") and player.has_node("PlayerStats"):
+		return player.get_node_or_null("PlayerStats")
+	return null
 
 
 func _check_contact_damage() -> void:
