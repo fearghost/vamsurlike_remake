@@ -23,6 +23,9 @@ var _choices: Array = []
 
 
 func _ready() -> void:
+	# The tree is paused while this overlay is visible; keep every control in
+	# this subtree processing so hover/focus/press actually reach the buttons.
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = false
 	var bg := ColorRect.new()
 	bg.color = Color(0, 0, 0, 0.75)
@@ -71,6 +74,8 @@ func open() -> void:
 		var skill = _choices[i]
 		_buttons[i].text = "%s\n%s" % [skill["name"], skill["desc"]]
 	visible = true
+	if is_instance_valid(_buttons[0]):
+		_buttons[0].grab_focus()
 
 
 func close() -> void:

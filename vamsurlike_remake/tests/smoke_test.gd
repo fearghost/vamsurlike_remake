@@ -327,8 +327,27 @@ func _dismiss_level_up(cs: Node) -> void:
 	if paused:
 		var ss := cs.get_node_or_null("SkillSelect") if cs != null else null
 		if ss != null and ss.has_method("close"):
-			ss.close()
+			# Exercise the real selection path (button press -> apply skill -> unpause),
+			# not a bare close() — that is what would have caught this regression.
+			var guard := 0
+			while paused and guard < 10:
+				var buttons := _find_buttons(ss)
+				if not buttons.is_empty():
+					buttons[0].press()
+				else:
+					ss.close()
+					break
+				guard += 1
 		paused = false
+
+
+func _find_buttons(node: Node) -> Array[Button]:
+	var found: Array[Button] = []
+	if node is Button:
+		found.append(node as Button)
+	for child in node.get_children():
+		found.append_array(_find_buttons(child))
+	return found
 
 
 ## Phase 6: the on-device "no attack effect / stuck when touching an enemy"
