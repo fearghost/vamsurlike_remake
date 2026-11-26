@@ -458,6 +458,12 @@ func _test_auto_attack_and_collision() -> void:
 			_diag_last = Time.get_ticks_msec()
 			var live_now_diag := get_nodes_in_group("projectiles")
 			print("[DIAG] move loop: elapsed=%dms, paused=%s, live_proj=%d, baseline=%d" % [Time.get_ticks_msec() - move_start, str(paused), live_now_diag.size(), baseline.size()])
+			for n in live_now_diag:
+				var vel = null
+				if n != null and n.has_method("get"):
+					vel = n.get("velocity")
+				var pos = (n as Node2D).global_position if n is Node2D else null
+				print("[DIAG]   proj node=%s type=%s pos=%s vel=%s in_tree=%s parent=%s" % [str(n.name), str(n.get_class() if n != null else "null"), str(pos), str(vel), str(n.is_inside_tree() if n != null else "null"), str(n.get_parent().name if (n != null and n.get_parent() != null) else "null")])
 		var live_now: Dictionary = {}
 		for n in get_nodes_in_group("projectiles"):
 			live_now[n] = true
