@@ -18,14 +18,16 @@ func _ready() -> void:
 	level_label = Label.new()
 	level_label.name = "LevelLabel"
 	level_label.text = "Lv 1"
-	level_label.position = Vector2(20, 64)
+	# Stage label occupies y=60..90 (see player_hud.tscn) — keep the level
+	# label below it so they don't overlap.
+	level_label.position = Vector2(20, 96)
 	add_child(level_label)
 
 	xp_bar = TextureProgressBar.new()
 	xp_bar.name = "XPBar"
 	xp_bar.min_value = 0
 	xp_bar.max_value = 100
-	xp_bar.position = Vector2(20, 88)
+	xp_bar.position = Vector2(20, 120)
 	xp_bar.size = Vector2(300, 12)
 	add_child(xp_bar)
 

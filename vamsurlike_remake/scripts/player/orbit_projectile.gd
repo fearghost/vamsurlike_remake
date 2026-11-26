@@ -28,15 +28,15 @@ func _ready() -> void:
 	collision_mask = 2   # enemies (same as player projectiles)
 	monitoring = true
 	var shape := CircleShape2D.new()
-	shape.radius = 12.0
+	shape.radius = 16.0
 	var col := CollisionShape2D.new()
 	col.shape = shape
 	add_child(col)
 	# dummy visual (same style as other placeholder sprites)
 	var rect := ColorRect.new()
 	rect.color = Color(0.3, 1.0, 0.6)
-	rect.size = Vector2(14, 14)
-	rect.position = Vector2(-7, -7)
+	rect.size = Vector2(22, 22)
+	rect.position = Vector2(-11, -11)
 	add_child(rect)
 	body_entered.connect(_on_body_entered)
 	_activate()

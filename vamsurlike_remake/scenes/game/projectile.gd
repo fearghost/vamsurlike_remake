@@ -8,6 +8,11 @@ extends Area2D
 @export var damage: int = 10
 @export var speed: float = 400.0
 @export var source_type: String = "player"  # "player" or "enemy"
+## Max distance (px) this shot may travel from its spawn point before it
+## self-destructs. 0 = unlimited (lifetime-only, legacy behavior). Set by the
+## firing code — reset on every launch so a recycled/pooled instance never
+## inherits a stale range from a previous owner.
+@export var max_range: float = 0.0
 
 var velocity: Vector2 = Vector2.ZERO
 
@@ -17,6 +22,7 @@ var velocity: Vector2 = Vector2.ZERO
 # far more than any shot needs (max engagement distance ~300px at 300-400px/s).
 const LIFETIME: float = 3.0
 var _lifetime: float = LIFETIME
+var _traveled: float = 0.0
 
 
 ## Runs on EVERY tree entry (including re-acquire from the pool, where _ready
@@ -58,20 +64,26 @@ func apply_source_style() -> void:
 ## _physics_process (not _process) so bullet speed is constant regardless of
 ## the device's render frame rate.
 func _physics_process(delta: float) -> void:
-	position += velocity * delta
+	var step := velocity * delta
+	position += step
+	_traveled += step.length()
 	_lifetime -= delta
-	if _lifetime <= 0.0:
+	if _lifetime <= 0.0 or (max_range > 0.0 and _traveled >= max_range):
 		_on_destroyed()
 
 
 func set_velocity(dir: Vector2) -> void:
 	velocity = dir.normalized() * speed
 	_lifetime = LIFETIME  # pooled projectiles keep stale state — reset on acquire
+	_traveled = 0.0
+	max_range = 0.0  # firing code sets this explicitly after launch (see AutoAttack)
 
 
 func set_direction(dir: Vector2) -> void:
 	velocity = (dir.normalized() if dir.length() > 0.001 else Vector2.RIGHT) * speed
 	_lifetime = LIFETIME
+	_traveled = 0.0
+	max_range = 0.0
 
 
 ## Legacy alias kept for callers that still use the old name.

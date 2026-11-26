@@ -100,6 +100,11 @@ func _spawn_shot(direction: Vector2) -> void:
 			projectile.global_position = parent.global_position
 			if projectile.has_method("set_velocity"):
 				projectile.set_velocity(direction * 400.0)
+			# Despawn once the shot has travelled past attack range — a shot fired
+			# at an in-range enemy shouldn't fly on toward empty space. set_velocity
+			# resets max_range, so assign it after launching.
+			if "max_range" in projectile:
+				projectile.max_range = attack_range
 			if projectile.has_method("set_damage"):
 				projectile.set_damage(attack_damage)
 	else:
@@ -112,6 +117,9 @@ func _spawn_shot(direction: Vector2) -> void:
 			projectile.global_position = parent.global_position
 			if projectile.has_method("set_direction"):
 				projectile.set_direction(direction)
+			# Despawn once the shot has travelled past attack range (see pooled path).
+			if "max_range" in projectile:
+				projectile.max_range = attack_range
 			if projectile.has_method("set_damage"):
 				projectile.set_damage(attack_damage)
 			get_tree().root.add_child(projectile)
