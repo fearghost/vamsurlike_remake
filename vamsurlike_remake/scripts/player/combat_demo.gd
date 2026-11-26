@@ -80,14 +80,14 @@ func _on_level_up(new_level: int) -> void:
 	pending_levels += 1
 	if skill_select != null and not skill_select.visible:
 		get_tree().paused = true
-		skill_select.show()
+		skill_select.open()
 
 
 func _on_skill_chosen(skill_id: String) -> void:
 	pending_levels -= 1
 	if pending_levels > 0:
 		# Multiple levels gained at once — offer another random choice set while paused
-		skill_select.show()
+		skill_select.open()
 	else:
 		get_tree().paused = false
 
@@ -99,7 +99,7 @@ func _on_all_waves_cleared() -> void:
 	# kill can trigger one, and it must not leak into the next scene.
 	pending_levels = 0
 	if skill_select != null:
-		skill_select.hide()
+		skill_select.close()
 
 	# Save cleared stage progress
 	var sm := get_node_or_null("/root/SaveManager")

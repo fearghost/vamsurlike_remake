@@ -326,8 +326,8 @@ func _test_enemy_spawning() -> void:
 func _dismiss_level_up(cs: Node) -> void:
 	if paused:
 		var ss := cs.get_node_or_null("SkillSelect") if cs != null else null
-		if ss != null and ss.has_method("hide"):
-			ss.hide()
+		if ss != null and ss.has_method("close"):
+			ss.close()
 		paused = false
 
 

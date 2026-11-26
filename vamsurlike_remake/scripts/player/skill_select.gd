@@ -63,7 +63,7 @@ func _ready() -> void:
 		_buttons.append(btn)
 
 
-func show() -> void:
+func open() -> void:
 	var pool := SKILLS.duplicate()
 	pool.shuffle()
 	_choices = pool.slice(0, 3)
@@ -73,7 +73,7 @@ func show() -> void:
 	visible = true
 
 
-func hide() -> void:
+func close() -> void:
 	visible = false
 
 
@@ -81,7 +81,7 @@ func _on_choice_pressed(index: int) -> void:
 	if index < 0 or index >= _choices.size():
 		return
 	var skill = _choices[index]
-	hide()
+	close()
 	_apply_skill(skill["id"])
 	skill_chosen.emit(skill["id"])
 
