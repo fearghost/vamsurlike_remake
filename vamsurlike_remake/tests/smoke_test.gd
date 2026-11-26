@@ -326,12 +326,14 @@ func _test_enemy_spawning() -> void:
 func _dismiss_level_up(cs: Node) -> void:
 	if paused:
 		var ss := cs.get_node_or_null("SkillSelect") if cs != null else null
+		print("[DIAG] _dismiss_level_up: paused=true, ss=%s" % str(ss))
 		if ss != null and ss.has_method("close"):
 			# Exercise the real selection path (button press -> apply skill -> unpause),
 			# not a bare close() — that is what would have caught this regression.
 			var guard := 0
 			while paused and guard < 10:
 				var buttons := _find_buttons(ss)
+				print("[DIAG] press loop iter %d: buttons=%d, ss.visible=%s" % [guard, buttons.size(), str(ss.visible if ss != null else "null")])
 				if not buttons.is_empty():
 					buttons[0].press()
 				else:
@@ -448,9 +450,14 @@ func _test_auto_attack_and_collision() -> void:
 	var move_deadline := move_start + 2000
 	var baseline: Dictionary = {}   # node -> Vector2 last-seen position
 	var moved := false
+	var _diag_last := move_start
 	while not moved and Time.get_ticks_msec() < move_deadline:
 		await process_frame
 		_dismiss_level_up(cs)
+		if Time.get_ticks_msec() - _diag_last > 500 and not moved:
+			_diag_last = Time.get_ticks_msec()
+			var live_now_diag := get_nodes_in_group("projectiles")
+			print("[DIAG] move loop: elapsed=%dms, paused=%s, live_proj=%d, baseline=%d" % [Time.get_ticks_msec() - move_start, str(paused), live_now_diag.size(), baseline.size()])
 		var live_now: Dictionary = {}
 		for n in get_nodes_in_group("projectiles"):
 			live_now[n] = true
