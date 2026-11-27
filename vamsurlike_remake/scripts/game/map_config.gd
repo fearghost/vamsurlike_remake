@@ -12,4 +12,6 @@ const MAP_SIZE := Vector2(2560, 1440)
 # via collision_mask so they cannot walk through them. Kept out of layers 1-2
 # (player/enemy) so physical contact between those two stays distance-based.
 const OBSTACLE_LAYER := 4
+# The layer-4 bit — this is what collision_layer must be set to, and what the player/enemy masks must contain.
+# Do NOT assign OBSTACLE_LAYER (the raw number 4) to a collision_layer: it would mean binary 0100 = layer 3.
 const OBSTACLE_MASK := 1 << (OBSTACLE_LAYER - 1)

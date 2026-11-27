@@ -475,7 +475,7 @@ func _test_auto_attack_and_collision() -> void:
 	else:
 		var obstacles: Array = []
 		for child in env.get_children():
-			if child is StaticBody2D and (child as StaticBody2D).collision_layer & MapConfig.OBSTACLE_LAYER != 0:
+			if child is StaticBody2D and (child as StaticBody2D).collision_layer & MapConfig.OBSTACLE_MASK != 0:
 				obstacles.append(child)
 		if obstacles.is_empty():
 			failures.append("collision: no layer-4 obstacles found in Environment — blocking untested")

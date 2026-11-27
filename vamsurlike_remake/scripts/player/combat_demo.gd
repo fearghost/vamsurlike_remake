@@ -199,7 +199,8 @@ func _make_obstacle(pos: Vector2, radius: float, type: String, node_name: String
 	var body := StaticBody2D.new()
 	body.name = node_name
 	body.position = pos
-	body.collision_layer = MapConfig.OBSTACLE_LAYER
+	# collision_layer is a bitmask — the layer-4 bit (MapConfig.OBSTACLE_MASK, 8), not the raw layer number 4
+	body.collision_layer = MapConfig.OBSTACLE_MASK
 	body.collision_mask = 0
 
 	# Fair-sized hitbox slightly smaller than the visual so edge touches don't feel sticky.
