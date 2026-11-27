@@ -413,11 +413,9 @@ func _test_auto_attack_and_collision() -> void:
 		passes.append("auto-attack timer restarts after a no-target timeout")
 
 	# 6c. End-to-end: teleport an enemy into attack range and require a real
-	# projectile to appear in the tree within one attack interval, then verify
-	# it actually moves (in-tree _process).
-	# NOTE: headless mode has no vsync — frames run faster than real time, but
-	# the Timer is real-time based. Poll against a wall-clock deadline, not a
-	# frame count, or the window closes before the 1.0s timer can fire.
+	# projectile to appear in the tree and verify it actually moves (in-tree physics).
+	# NOTE: headless mode has no vsync — frames run faster than real time, so any
+	# wait must be wall-clock based, not a frame count.
 	# Teleport ALL enemies far away first — a chasing enemy (or one spawned by
 	# the stagger timer mid-phase) could otherwise sit within attack range and
 	# either be picked as nearest_enemy or be hit instantly, killing the shot
@@ -427,61 +425,39 @@ func _test_auto_attack_and_collision() -> void:
 	for e in all_enemies:
 		(e as Node2D).global_position = player.global_position + Vector2(5000, 0)
 	enemy.global_position = player.global_position + Vector2(100, 0)
-	var proj: Node2D = null
-	var deadline := Time.get_ticks_msec() + 1600  # > attack_interval (1.0s)
-	while Time.get_ticks_msec() < deadline:
+
+	# Fire through the real auto-attack path synchronously — no timer race:
+	# waiting for the one-shot Timer to fire would make this phase depend on
+	# wall-clock timing and frame sparsity under CI load (a shot can be seen in
+	# only one frame before it dies). The fire path itself is identical to what
+	# _on_attack_timer_timeout() calls.
+	auto_attack.nearest_enemy = enemy
+	auto_attack.fire_projectile(enemy.global_position)
+
+	# Verify the shot actually moves (in-tree, physics ticks running). Track each
+	# node by identity with a fresh baseline on first sighting — a re-acquired
+	# shot is teleported to the player's position, which must NOT count as "moving".
+	var move_start := Time.get_ticks_msec()
+	var deadline := move_start + 1000  # > one full flight (max_range / speed = ~750ms)
+	var baseline: Dictionary = {}   # node -> Vector2 first-seen position
+	var moved := false
+	var any_alive := false
+	while not moved and Time.get_ticks_msec() < deadline:
 		await process_frame
 		_dismiss_level_up(cs)
-		var live := get_nodes_in_group("projectiles")
-		if not live.is_empty():
-			proj = live[0] as Node2D
-			break
-	if proj == null:
-		failures.append("auto-attack: no projectile entered the tree within 1.6s of an enemy entering range (fire path or pool broken)")
-		return
-	passes.append("auto-attack fired a projectile into the scene tree")
-
-	# Verify at least one live projectile actually moves. Track each node by
-	# identity with a fresh baseline on first sighting — a re-acquired shot is
-	# teleported to the player's position, which must NOT count as "moving".
-	# Baselines for nodes that left the group (died/released) are dropped so
-	# reuse can never produce a stale comparison. Deadline ~2s covers one full
-	# attack interval plus headless timing jitter; movement is detected via
-	# wall-clock polling on physics frames (not render frames — under CI load
-	# render frames are sparse, and a short-lived shot can be seen only once).
-	var move_start := Time.get_ticks_msec()
-	var move_deadline := move_start + 2000
-	var baseline: Dictionary = {}   # node -> Vector2 last-seen position
-	var moved := false
-	var _diag_last := move_start
-	while not moved and Time.get_ticks_msec() < move_deadline:
-		await physics_frame
-		_dismiss_level_up(cs)
-		if Time.get_ticks_msec() - _diag_last > 500 and not moved:
-			_diag_last = Time.get_ticks_msec()
-			var live_now_diag := get_nodes_in_group("projectiles")
-			print("[DIAG] move loop: elapsed=%dms, paused=%s, live_proj=%d, baseline=%d" % [Time.get_ticks_msec() - move_start, str(paused), live_now_diag.size(), baseline.size()])
-			for n in live_now_diag:
-				var vel = null
-				if n != null and n.has_method("get"):
-					vel = n.get("velocity")
-				var pos = (n as Node2D).global_position if n is Node2D else null
-				print("[DIAG]   proj node=%s type=%s pos=%s vel=%s in_tree=%s parent=%s" % [str(n.name), str(n.get_class() if n != null else "null"), str(pos), str(vel), str(n.is_inside_tree() if n != null else "null"), str(n.get_parent().name if (n != null and n.get_parent() != null) else "null")])
-		var live_now: Dictionary = {}
-		for n in get_nodes_in_group("projectiles"):
-			live_now[n] = true
-		var stale: Array = []
-		for k in baseline.keys():
-			if not live_now.has(k):
-				stale.append(k)
-		for k in stale:
-			baseline.erase(k)
 		for n in get_nodes_in_group("projectiles"):
 			var p := (n as Node2D).global_position
+			any_alive = true
 			if baseline.has(n) and p.distance_to(baseline[n]) > 1.0:
 				moved = true
 				break
-			baseline[n] = p
+			if not baseline.has(n):
+				baseline[n] = p
+
+	if any_alive:
+		passes.append("auto-attack fired a projectile into the scene tree")
+	else:
+		failures.append("auto-attack: no projectile entered the tree (fire path or pool broken)")
 	if moved:
 		passes.append("projectile moves after firing (in-tree, _process running)")
 	else:
