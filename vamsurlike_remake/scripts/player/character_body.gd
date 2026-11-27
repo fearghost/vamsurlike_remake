@@ -19,12 +19,17 @@ static func load_character(id: String) -> CharacterData:
 		if data != null:
 			return data
 	printerr("[CharacterBody] character '%s' not found at %s — falling back to female_knight" % [id, path])
-	var fallback := CharacterData.new()
 	if ResourceLoader.exists("res://data/characters/female_knight.tres"):
 		var f := load("res://data/characters/female_knight.tres") as CharacterData
 		if f != null:
 			return f
-	return fallback
+	# Last resort — create via a fresh Resource with the script attached (global-class .new() is broken in Godot 4)
+	var data_script := load("res://scripts/data/character_data.gd") as Script
+	if data_script == null:
+		return null
+	var fallback := Resource.new()
+	fallback.set_script(data_script)
+	return fallback as CharacterData
 
 
 func _ready() -> void:

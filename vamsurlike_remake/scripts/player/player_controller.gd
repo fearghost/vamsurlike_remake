@@ -32,10 +32,19 @@ func _ready() -> void:
 		var gm := get_node_or_null("/root/GameManager")
 		if gm != null and gm.has_method("get_selected_character"):
 			char_id = str(gm.get_selected_character())
-		var body := CharacterBody.new()
-		body.name = "Body"
-		body.setup(CharacterBody.load_character(char_id))
-		add_child(body)
+		var body_script := load("res://scripts/player/character_body.gd") as Script
+		if body_script == null:
+			push_error("[PlayerController] failed to load character_body.gd — no Body built")
+		else:
+			var data = load("res://data/characters/%s.tres" % char_id) as CharacterData
+			if data == null:
+				push_error("[PlayerController] character '%s' missing — falling back to female knight" % char_id)
+			var body  # untyped — dynamic dispatch to the attached CharacterBody script
+			body = Node2D.new()
+			body.set_script(body_script)
+			body.name = "Body"
+			body.setup(data)
+			add_child(body)
 
 	# Add collision shape for Area2D projectile detection
 	var collision := CollisionShape2D.new()

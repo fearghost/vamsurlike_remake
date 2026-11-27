@@ -22,9 +22,18 @@ func _build_preview(node: Node2D, character_id: String) -> void:
 	if node == null or not is_instance_valid(node):
 		push_error("[CharacterSelect] preview node missing for %s" % character_id)
 		return
-	var body := CharacterBody.new()
+	var body_script := load("res://scripts/player/character_body.gd") as Script
+	if body_script == null:
+		push_error("[CharacterSelect] failed to load character_body.gd — no preview for %s" % character_id)
+		return
+	var data = load("res://data/characters/%s.tres" % character_id) as CharacterData
+	if data == null:
+		push_error("[CharacterSelect] character '%s' missing — preview will fall back to female knight" % character_id)
+	var body  # untyped — dynamic dispatch to the attached CharacterBody script
+	body = Node2D.new()
+	body.set_script(body_script)
 	body.name = "CharacterBody"
-	body.setup(CharacterBody.load_character(character_id))
+	body.setup(data)
 	node.add_child(body)
 
 

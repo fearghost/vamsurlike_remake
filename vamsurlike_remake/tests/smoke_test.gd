@@ -208,7 +208,7 @@ func _test_start_button_flow() -> void:
 	if pick_button == null:
 		failures.append("Start flow: no character select button found on the select screen")
 	else:
-		pick_button.press()
+		pick_button.emit_signal("pressed")
 		await process_frame
 		await process_frame
 		await process_frame
@@ -353,7 +353,7 @@ func _dismiss_level_up(cs: Node) -> void:
 				var buttons := _find_buttons(ss)
 				print("[DIAG] press loop iter %d: buttons=%d, ss.visible=%s" % [guard, buttons.size(), str(ss.visible if ss != null else "null")])
 				if not buttons.is_empty():
-					buttons[0].press()
+					buttons[0].emit_signal("pressed")
 				else:
 					ss.close()
 					break
