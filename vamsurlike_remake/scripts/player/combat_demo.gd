@@ -148,12 +148,15 @@ func _setup_environment() -> void:
 	for i in range(80):
 		var w := rng.randf_range(10.0, 48.0)
 		var h := rng.randf_range(6.0, 22.0)
-		var patch := ColorRect.new()
+		# Flat ellipse tufts (wider than tall) — reads as ground texture in quarter view
+		# instead of floating rotated rectangles.
+		var patch := Ellipse2D.new()
 		patch.color = palette[rng.randi() % palette.size()]
-		patch.size = Vector2(w, h)
+		patch.radius_x = w * 0.5
+		patch.radius_y = h * 0.45
 		patch.position = Vector2(
-			rng.randf_range(20.0, MapConfig.MAP_SIZE.x - w - 20.0),
-			rng.randf_range(20.0, MapConfig.MAP_SIZE.y - h - 20.0)
+			rng.randf_range(w + 20.0, MapConfig.MAP_SIZE.x - w - 20.0),
+			rng.randf_range(h + 20.0, MapConfig.MAP_SIZE.y - h - 20.0)
 		)
 		patch.rotation = rng.randf_range(-0.6, 0.6)
 		env.add_child(patch)
@@ -199,8 +202,17 @@ func _make_obstacle(pos: Vector2, radius: float, type: String, node_name: String
 	col.shape = shape
 	body.add_child(col)
 
+	# Ground shadow — grounds the object in quarter view (light from upper-left,
+	# so the shadow falls lower-right and peeks out below the base). Added first so it renders behind the trunk/crown.
+	var shadow := Ellipse2D.new()
+	shadow.color = Color(0, 0, 0, 0.28)
+	shadow.radius_x = radius * 1.05
+	shadow.radius_y = radius * 0.40
+	shadow.position = Vector2(4, radius * 0.58)
+	body.add_child(shadow)
+
 	if type == "tree":
-		# Trunk (drawn first so the crown covers its top), then a two-tone crown.
+		# Trunk (drawn first so the crown covers its top), then a two-tone crown slightly flattened for quarter view.
 		var trunk := ColorRect.new()
 		trunk.color = Color(0.32, 0.22, 0.12, 1)
 		trunk.size = Vector2(radius * 0.28, radius * 0.55)
@@ -210,12 +222,15 @@ func _make_obstacle(pos: Vector2, radius: float, type: String, node_name: String
 		var crown := Polygon2D.new()
 		crown.polygon = _circle_polygon(radius, 18)
 		crown.color = Color(0.11, 0.30, 0.10, 1)
+		crown.scale = Vector2(1.0, 0.85)   # quarter-view flattening
+		crown.position = Vector2(0, -radius * 0.12)
 		body.add_child(crown)
 
 		var crown_hi := Polygon2D.new()
 		crown_hi.polygon = _circle_polygon(radius * 0.62, 14)
 		crown_hi.color = Color(0.18, 0.42, 0.15, 1)
-		crown_hi.position = Vector2(-radius * 0.12, -radius * 0.16)
+		crown_hi.position = Vector2(-radius * 0.12, -radius * 0.26)
+		crown_hi.scale = Vector2(1.0, 0.85)
 		body.add_child(crown_hi)
 	else:
 		# Irregular rock — vertex radii vary a little so no two rocks look identical.
@@ -228,12 +243,15 @@ func _make_obstacle(pos: Vector2, radius: float, type: String, node_name: String
 		var rock := Polygon2D.new()
 		rock.polygon = pts
 		rock.color = Color(0.46, 0.45, 0.43, 1)
+		rock.scale = Vector2(1.0, 0.82)   # quarter-view flattening
+		rock.position = Vector2(0, -radius * 0.10)
 		body.add_child(rock)
 
 		var rock_hi := Polygon2D.new()
 		rock_hi.polygon = _circle_polygon(radius * 0.55, 10)
 		rock_hi.color = Color(0.58, 0.57, 0.54, 1)
-		rock_hi.position = Vector2(-radius * 0.15, -radius * 0.18)
+		rock_hi.position = Vector2(-radius * 0.15, -radius * 0.26)
+		rock_hi.scale = Vector2(1.0, 0.82)
 		body.add_child(rock_hi)
 
 	return body

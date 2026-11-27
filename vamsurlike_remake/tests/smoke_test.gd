@@ -357,7 +357,8 @@ func _find_buttons(node: Node) -> Array[Button]:
 ## the player while preserving contact damage, (b) the one-shot auto-attack
 ## timer keeps running after a no-target timeout, and (c) a fired projectile
 ## actually enters the scene tree and moves (pooled projectiles used to be
-## acquired but never added to the tree — invisible, immobile, no damage).
+## acquired but never added to the tree — invisible, immobile, no damage), and
+## (d) layer-4 obstacles physically block movement.
 func _test_auto_attack_and_collision() -> void:
 	print("--- Phase 6: auto-attack projectile + collision layers ---")
 	var cs := current_scene
@@ -462,6 +463,48 @@ func _test_auto_attack_and_collision() -> void:
 		passes.append("projectile moves after firing (in-tree, _process running)")
 	else:
 		failures.append("projectile did not move after firing (not in tree / _process dead)")
+
+	# 6d. Obstacles must physically block movement — teleport the player next to a
+	# layer-4 obstacle, hold input toward it for ~0.5s of physics frames, and require
+	# that the player never enters the obstacle's inner region (i.e. move_and_slide()
+	# is actually running against the shapes). Teleport all enemies far away first so
+	# no combat interference can pause/interrupt this check.
+	var env := cs.get_node_or_null("Environment")
+	if env == null:
+		failures.append("collision: Environment node missing — obstacle blocking untested")
+	else:
+		var obstacles: Array = []
+		for child in env.get_children():
+			if child is StaticBody2D and (child as StaticBody2D).collision_layer & MapConfig.OBSTACLE_LAYER != 0:
+				obstacles.append(child)
+		if obstacles.is_empty():
+			failures.append("collision: no layer-4 obstacles found in Environment — blocking untested")
+		else:
+			for e in get_nodes_in_group("enemies"):
+				(e as Node2D).global_position = player.global_position + Vector2(5000, 0)
+
+			var target := obstacles[0] as StaticBody2D
+			var hit_r := 40.0
+			for c in target.get_children():
+				if c is CollisionShape2D and (c as CollisionShape2D).shape is CircleShape2D:
+					hit_r = ((c as CollisionShape2D).shape as CircleShape2D).radius
+
+			var target_pos := target.global_position
+			player.global_position = target_pos + Vector2(0, hit_r + 40.0)   # south of the obstacle
+			player.set_input_direction(Vector2(0, -1))   # toward it (north/up)
+
+			var deadline := Time.get_ticks_msec() + 600
+			while Time.get_ticks_msec() < deadline:
+				await process_frame
+				_dismiss_level_up(cs)
+
+			player.set_input_direction(Vector2.ZERO)   # reset so later phases are unaffected
+			var final_dist := player.global_position.distance_to(target_pos)
+			if final_dist >= hit_r + 5.0:
+				passes.append("player is physically blocked by an obstacle (never entered the inner region)")
+			else:
+				failures.append("collision: player passed through an obstacle — distance %.1f < hitbox radius %.1f (move_and_slide not running or mask broken)" % [final_dist, hit_r])
+
 	_dismiss_level_up(cs)
 
 

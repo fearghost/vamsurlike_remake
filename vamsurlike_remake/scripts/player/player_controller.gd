@@ -3,7 +3,7 @@ extends CharacterBody2D
 
 
 ## Player controller that reads input from VirtualJoystick and drives movement.
-## Uses a ColorRect as a dummy sprite (blue rectangle) for visual representation.
+## Builds its own quarter-view body (shadow + flattened circle + highlight) when no child Body exists — flat boxes read as top-down, this reads as viewed from above at an angle.
 
 
 @export var move_speed: float = 200.0
@@ -25,14 +25,36 @@ func _ready() -> void:
 	collision_layer = 1
 	collision_mask = MapConfig.OBSTACLE_MASK
 
-	# Create dummy sprite (blue ColorRect) if no child sprite exists
+	# Build the quarter-view body (shadow + flattened circle + highlight) if no child Body exists
 	if find_child("Body") == null:
-		var dummy := ColorRect.new()
-		dummy.name = "Body"
-		dummy.color = Color.BLUE
-		dummy.position = Vector2(-16, -16)
-		dummy.size = Vector2(32, 32)
-		add_child(dummy)
+		var body := Node2D.new()
+		body.name = "Body"
+
+		# Ground shadow — light from upper-left, so the shadow falls lower-right and peeks out below the base
+		var shadow := Ellipse2D.new()
+		shadow.color = Color(0, 0, 0, 0.30)
+		shadow.radius_x = 15.0
+		shadow.radius_y = 6.0
+		shadow.position = Vector2(4, 9)
+		body.add_child(shadow)
+
+		# Body — slightly flattened ellipse reads as viewed from above at an angle
+		var circle := Ellipse2D.new()
+		circle.color = Color(0.20, 0.42, 1.00, 1)
+		circle.radius_x = 15.0
+		circle.radius_y = 12.5
+		circle.position = Vector2(0, -3)
+		body.add_child(circle)
+
+		# Highlight — upper-left light source
+		var hi := Ellipse2D.new()
+		hi.color = Color(0.55, 0.75, 1.00, 1)
+		hi.radius_x = 6.5
+		hi.radius_y = 4.5
+		hi.position = Vector2(-4.5, -7.5)
+		body.add_child(hi)
+
+		add_child(body)
 
 	# Add collision shape for Area2D projectile detection
 	var collision := CollisionShape2D.new()

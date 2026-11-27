@@ -60,20 +60,43 @@ func _ready() -> void:
 	# projectile.gd -> EnemyAI class -> enemy_ai.gd -> projectile.tscn) that
 	# intermittently breaks resource loading with "Parse Error: Busy".
 
-	# Create dummy sprite (ColorRect) if the scene doesn't provide one
+	# Build the quarter-view body (shadow + flattened circle + highlight) if the scene doesn't provide one — flat boxes read as top-down; this reads as viewed from above at an angle. Color stays pattern-coded for readability.
 	if find_child("Sprite") == null:
-		var sprite := ColorRect.new()
-		sprite.name = "Sprite"
-		sprite.size = Vector2(32, 32)
-		sprite.position = Vector2(-16, -16)
+		var base := Color(1.0, 0.3, 0.3)   # chase red (default)
 		match current_pattern:
 			"ranged":
-				sprite.color = Color(0.8, 0.4, 0.8)  # Purple for ranged
+				base = Color(0.8, 0.4, 0.8)  # purple for ranged
 			"charge":
-				sprite.color = Color(0.8, 0.2, 0.2)  # Red for charge
-			_:
-				sprite.color = Color(1.0, 0.3, 0.3)  # Red for chase
-		add_child(sprite)
+				base = Color(0.8, 0.2, 0.2)  # dark red for charge
+
+		var body := Node2D.new()
+		body.name = "Sprite"
+
+		# Ground shadow — light from upper-left, so the shadow falls lower-right and peeks out below the base
+		var shadow := Ellipse2D.new()
+		shadow.color = Color(0, 0, 0, 0.30)
+		shadow.radius_x = 15.0
+		shadow.radius_y = 6.0
+		shadow.position = Vector2(4, 9)
+		body.add_child(shadow)
+
+		# Body — slightly flattened ellipse reads as viewed from above at an angle
+		var circle := Ellipse2D.new()
+		circle.color = base
+		circle.radius_x = 15.0
+		circle.radius_y = 12.5
+		circle.position = Vector2(0, -3)
+		body.add_child(circle)
+
+		# Highlight — upper-left light source (lighter than the body color)
+		var hi := Ellipse2D.new()
+		hi.color = base.lerp(Color.WHITE, 0.45)
+		hi.radius_x = 6.5
+		hi.radius_y = 4.5
+		hi.position = Vector2(-4.5, -7.5)
+		body.add_child(hi)
+
+		add_child(body)
 
 	# Add collision shape if the scene doesn't provide one
 	if not _has_collision_shape():
