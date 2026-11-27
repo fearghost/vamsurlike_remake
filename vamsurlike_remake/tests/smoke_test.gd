@@ -447,15 +447,15 @@ func _test_auto_attack_and_collision() -> void:
 	# Baselines for nodes that left the group (died/released) are dropped so
 	# reuse can never produce a stale comparison. Deadline ~2s covers one full
 	# attack interval plus headless timing jitter; movement is detected via
-	# wall-clock polling, not frame counts (headless frames run faster than
-	# real time and physics ticks are decoupled from rendered frames).
+	# wall-clock polling on physics frames (not render frames — under CI load
+	# render frames are sparse, and a short-lived shot can be seen only once).
 	var move_start := Time.get_ticks_msec()
 	var move_deadline := move_start + 2000
 	var baseline: Dictionary = {}   # node -> Vector2 last-seen position
 	var moved := false
 	var _diag_last := move_start
 	while not moved and Time.get_ticks_msec() < move_deadline:
-		await process_frame
+		await physics_frame
 		_dismiss_level_up(cs)
 		if Time.get_ticks_msec() - _diag_last > 500 and not moved:
 			_diag_last = Time.get_ticks_msec()
