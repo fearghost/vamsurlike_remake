@@ -6,8 +6,9 @@ extends Node
 ## Uses PoolManager for projectile pooling and object lifecycle management.
 ## `extra_shots` adds additional shots spread evenly across a full circle
 ## (360°) starting from the aim direction — each pick of the "Extra Projectile"
-## skill increases it by one. Orbiting blades are managed here as well: each
-## pick of the "Orbital Blade" skill adds one blade that circles the player.
+## skill increases it by one. Orbiting flame shields are managed here as well: each
+## pick of the "Flame Shield" skill adds one shield that circles the player.
+## All shields share activation time and lifetime so they appear/vanish together.
 
 @export var attack_interval: float = 1.0
 @export var attack_range: float = 300.0
@@ -71,6 +72,7 @@ func find_nearest_enemy() -> Node2D:
 func fire_projectile(target_position: Vector2) -> void:
 	if nearest_enemy == null:
 		return
+	SoundManager.play_shoot()
 
 	var parent := get_parent()
 	if parent == null or not is_inside_tree():
@@ -129,11 +131,14 @@ func add_orbit() -> void:
 	orbit_count += 1
 	var index := _orbiters.size()
 	_spawn_orbiter(index)
-	# Re-phase every blade so they stay evenly spread across the circle.
+	# Re-phase every shield so they stay evenly spread across the circle, and
+	# restart all of them together — shields appear and vanish at the same time.
 	for i in range(_orbiters.size()):
 		var o = _orbiters[i]
 		if is_instance_valid(o) and o.has_method("set_phase"):
 			o.set_phase(TAU * float(i) / float(max(1, _orbiters.size())))
+		if is_instance_valid(o) and o.has_method("sync_activation"):
+			o.sync_activation()
 
 
 func sync_damage(amount: int) -> void:

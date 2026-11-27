@@ -75,3 +75,84 @@ func mute_all(mute: bool) -> void:
 	_init_sfx_player()
 	bgm_player.volume_db = -80 if mute else 0
 	sfx_player.volume_db = -80 if mute else 0
+
+
+# --- Synthesized SFX (no audio assets shipped with the project) -------------
+# Short procedural streams generated once and cached; keeps every sound free of
+# binary asset dependencies while still reading clearly as "shoot" / "hit".
+var _shoot_stream: AudioStreamWAV = null
+var _hit_stream: AudioStreamWAV = null
+var _last_shoot_time := -1.0
+var _last_hit_time := -1.0
+
+
+## Plays a short "projectile fired" blip (rate-limited to avoid clipping when
+## multi-shot waves spawn several shots in the same frame).
+func play_shoot() -> void:
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - _last_shoot_time < 0.05:
+		return
+	_last_shoot_time = now
+	if _shoot_stream == null:
+		_shoot_stream = _build_shoot_stream()
+	play_sfx(_shoot_stream)
+
+
+## Plays a short "enemy hit" thud (rate-limited for the same reason).
+func play_hit() -> void:
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - _last_hit_time < 0.05:
+		return
+	_last_hit_time = now
+	if _hit_stream == null:
+		_hit_stream = _build_hit_stream()
+	play_sfx(_hit_stream)
+
+
+func _build_shoot_stream() -> AudioStreamWAV:
+	var rate := 44100
+	var dur := 0.10
+	var n := int(rate * dur)
+	var data := PackedByteArray()
+	data.resize(n * 2)
+	var phase := 0.0
+	for i in range(n):
+		var t := float(i) / rate
+		var freq := lerpf(920.0, 240.0, t / dur)
+		phase += TAU * freq / rate
+		var env := pow(1.0 - t / dur, 1.6)
+		var sample := sin(phase) * env
+		var u := int(sample * 26000.0) & 0xFFFF
+		data[i * 2] = u & 0xFF
+		data[i * 2 + 1] = (u >> 8) & 0xFF
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = rate
+	stream.stereo = false
+	stream.data = data
+	return stream
+
+
+func _build_hit_stream() -> AudioStreamWAV:
+	var rate := 44100
+	var dur := 0.14
+	var n := int(rate * dur)
+	var data := PackedByteArray()
+	data.resize(n * 2)
+	var lp := 0.0
+	for i in range(n):
+		var t := float(i) / rate
+		var env := exp(-t * 18.0)
+		var noise := randf() * 2.0 - 1.0
+		lp = lp * 0.55 + noise * 0.45   # one-pole lowpass — soft thud, not static
+		var thump := sin(TAU * 130.0 * t) * exp(-t * 26.0)
+		var sample := clampf((lp * 1.4 + thump * 0.9) * env, -1.0, 1.0)
+		var u := int(sample * 24000.0) & 0xFFFF
+		data[i * 2] = u & 0xFF
+		data[i * 2 + 1] = (u >> 8) & 0xFF
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = rate
+	stream.stereo = false
+	stream.data = data
+	return stream

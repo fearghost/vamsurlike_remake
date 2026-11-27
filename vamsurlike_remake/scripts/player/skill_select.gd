@@ -15,7 +15,7 @@ const SKILLS := [
 	{"id": "heal", "name": "Energy Restore", "desc": "Restore HP to full"},
 	{"id": "range_up", "name": "Long Range", "desc": "+80 attack range"},
 	{"id": "speed_up", "name": "Swift Boots", "desc": "+25 move speed"},
-	{"id": "orbit_projectile", "name": "Orbital Blade", "desc": "A blade circles you for 5s dealing collision damage; re-fires after a cooldown. Each pick adds one blade."},
+	{"id": "orbit_projectile", "name": "Flame Shield", "desc": "A flame shield circles you for 5s dealing collision damage; re-fires after a cooldown. Each pick adds one shield — all shields appear and vanish together."},
 ]
 
 var _buttons: Array[Button] = []

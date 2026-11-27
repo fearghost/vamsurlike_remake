@@ -44,21 +44,81 @@ func _ready() -> void:
 		body_entered.connect(_handle_body_entered as Callable)
 
 
-## (Re)applies the sprite color and collision mask for the current source_type.
-## Called after source_type changes — pooled projectiles are reused, and _ready
-## only runs on first tree entry, so both must be re-applied every acquire.
+## (Re)applies the vector-drawn visual and collision mask for the current
+## source_type. Called after source_type changes — pooled projectiles are reused,
+## and _ready only runs on first tree entry, so both must be re-applied every acquire.
 func apply_source_style() -> void:
-	var sprite := find_child("Sprite")
+	# The scene's legacy ColorRect is replaced by a vector-drawn visual per source type.
+	var legacy := find_child("Sprite")
+	if legacy != null:
+		legacy.visible = false
+
 	if source_type == "player":
 		# Player shots only ever hit enemies (layer 2) — never the player itself.
 		collision_mask = 2
-		if sprite is ColorRect:
-			(sprite as ColorRect).color = Color(1, 1, 0, 1)       # Yellow for player
 	else:
 		# Enemy shots only ever hit the player (layer 1) — never other enemies.
 		collision_mask = 1
-		if sprite is ColorRect:
-			(sprite as ColorRect).color = Color(1, 0.5, 0, 1)      # Orange for enemy
+
+	var visual := get_node_or_null("Visual") as Node2D
+	if visual == null:
+		visual = Node2D.new()
+		visual.name = "Visual"
+		add_child(visual)
+	for child in visual.get_children():
+		visual.remove_child(child)
+		child.free()
+
+	if source_type == "player":
+		_build_bullet(visual)
+	else:
+		_build_arrow(visual)
+
+
+## Bullet profile (pointing +X): elongated hexagonal body with a bright core stripe.
+func _build_bullet(parent: Node2D) -> void:
+	var outer := Polygon2D.new()
+	outer.polygon = PackedVector2Array([
+		Vector2(13, 0), Vector2(6, -3.4), Vector2(-8, -3.4), Vector2(-11, -1.8),
+		Vector2(-11, 1.8), Vector2(-8, 3.4), Vector2(6, 3.4),
+	])
+	outer.color = Color(1.0, 0.95, 0.35)   # bright yellow bullet
+	parent.add_child(outer)
+	var core := Polygon2D.new()
+	core.polygon = PackedVector2Array([
+		Vector2(9, 0), Vector2(5, -1.4), Vector2(-8, -1.4),
+		Vector2(-8, 1.4), Vector2(5, 1.4),
+	])
+	core.color = Color(1.0, 0.99, 0.75)   # near-white core stripe
+	parent.add_child(core)
+
+
+## Arrow profile (pointing +X): brown shaft, steel head, light fletching at the tail.
+func _build_arrow(parent: Node2D) -> void:
+	var shaft := Polygon2D.new()
+	shaft.polygon = PackedVector2Array([
+		Vector2(9, -1.3), Vector2(-7, -1.3), Vector2(-7, 1.3), Vector2(9, 1.3),
+	])
+	shaft.color = Color(0.45, 0.28, 0.15)   # brown shaft
+	parent.add_child(shaft)
+	var head := Polygon2D.new()
+	head.polygon = PackedVector2Array([
+		Vector2(14, 0), Vector2(8, -2.6), Vector2(8, 2.6),
+	])
+	head.color = Color(0.85, 0.87, 0.9)     # steel head
+	parent.add_child(head)
+	var fin_top := Polygon2D.new()
+	fin_top.polygon = PackedVector2Array([
+		Vector2(-7, -1.3), Vector2(-12, -4.6), Vector2(-10, 0),
+	])
+	fin_top.color = Color(0.9, 0.85, 0.75)   # light fletching
+	parent.add_child(fin_top)
+	var fin_bottom := Polygon2D.new()
+	fin_bottom.polygon = PackedVector2Array([
+		Vector2(-7, 1.3), Vector2(-12, 4.6), Vector2(-10, 0),
+	])
+	fin_bottom.color = Color(0.9, 0.85, 0.75)
+	parent.add_child(fin_bottom)
 
 
 ## _physics_process (not _process) so bullet speed is constant regardless of
@@ -66,6 +126,8 @@ func apply_source_style() -> void:
 func _physics_process(delta: float) -> void:
 	var step := velocity * delta
 	position += step
+	if velocity.length() > 0.001:
+		rotation = velocity.angle()
 	_traveled += step.length()
 	_lifetime -= delta
 	if _lifetime <= 0.0 or (max_range > 0.0 and _traveled >= max_range):
@@ -74,6 +136,8 @@ func _physics_process(delta: float) -> void:
 
 func set_velocity(dir: Vector2) -> void:
 	velocity = dir.normalized() * speed
+	if velocity.length() > 0.001:
+		rotation = velocity.angle()
 	_lifetime = LIFETIME  # pooled projectiles keep stale state — reset on acquire
 	_traveled = 0.0
 	max_range = 0.0  # firing code sets this explicitly after launch (see AutoAttack)
@@ -81,6 +145,8 @@ func set_velocity(dir: Vector2) -> void:
 
 func set_direction(dir: Vector2) -> void:
 	velocity = (dir.normalized() if dir.length() > 0.001 else Vector2.RIGHT) * speed
+	if velocity.length() > 0.001:
+		rotation = velocity.angle()
 	_lifetime = LIFETIME
 	_traveled = 0.0
 	max_range = 0.0

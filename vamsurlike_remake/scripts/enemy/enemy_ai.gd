@@ -60,7 +60,9 @@ func _ready() -> void:
 	# projectile.gd -> EnemyAI class -> enemy_ai.gd -> projectile.tscn) that
 	# intermittently breaks resource loading with "Parse Error: Busy".
 
-	# Build the quarter-view body (shadow + flattened circle + highlight) if the scene doesn't provide one — flat boxes read as top-down; this reads as viewed from above at an angle. Color stays pattern-coded for readability.
+	# Build the quarter-view soldier (shadow + boots + tunic + helmet + weapon) if
+	# the scene doesn't provide one — flat boxes read as top-down; this reads as
+	# viewed from above at an angle. Color stays pattern-coded for readability.
 	if find_child("Sprite") == null:
 		var base := Color(1.0, 0.3, 0.3)   # chase red (default)
 		match current_pattern:
@@ -79,19 +81,49 @@ func _ready() -> void:
 		shadow.position = Vector2(4, 9)
 		body.add_child(shadow)
 
-		# Body — slightly flattened ellipse reads as viewed from above at an angle
+		# Boots — two small dark feet peeking below the tunic
+		for side in [-1, 1]:
+			var leg := Polygon2D.new()
+			leg.polygon = _ellipse_polygon(3.5, 4.5)
+			leg.color = Color(0.16, 0.12, 0.14)
+			leg.position = Vector2(side * 5.0, 6.0)
+			body.add_child(leg)
+
+		# Tunic — slightly flattened ellipse reads as viewed from above at an angle
 		var circle := Polygon2D.new()
-		circle.polygon = _ellipse_polygon(15.0, 12.5)
+		circle.polygon = _ellipse_polygon(13.0, 10.5)
 		circle.color = base
 		circle.position = Vector2(0, -3)
 		body.add_child(circle)
 
 		# Highlight — upper-left light source (lighter than the body color)
 		var hi := Polygon2D.new()
-		hi.polygon = _ellipse_polygon(6.5, 4.5)
+		hi.polygon = _ellipse_polygon(6.0, 4.5)
 		hi.color = base.lerp(Color.WHITE, 0.45)
-		hi.position = Vector2(-4.5, -7.5)
+		hi.position = Vector2(-4.0, -7.0)
 		body.add_child(hi)
+
+		# Helmet — steel circle with a small pattern-colored plume on top
+		var helmet := Polygon2D.new()
+		helmet.polygon = _ellipse_polygon(6.5, 6.0)
+		helmet.color = Color(0.62, 0.66, 0.72)
+		helmet.position = Vector2(0, -13.5)
+		body.add_child(helmet)
+		var helmet_hi := Polygon2D.new()
+		helmet_hi.polygon = _ellipse_polygon(3.0, 2.4)
+		helmet_hi.color = Color(0.85, 0.87, 0.9)
+		helmet_hi.position = Vector2(-1.8, -15.5)
+		body.add_child(helmet_hi)
+		var plume := Polygon2D.new()
+		plume.polygon = PackedVector2Array([Vector2(-1.8, -18.5), Vector2(3.4, -18.5), Vector2(0.6, -24.5)])
+		plume.color = base
+		body.add_child(plume)
+
+		# Weapon on the right side — spear for chase/charge, bow for ranged
+		if current_pattern == "ranged":
+			_build_bow(body)
+		else:
+			_build_spear(body)
 
 		add_child(body)
 
@@ -185,11 +217,56 @@ func _ai_charge(delta: float) -> void:
 				charge_timer = 0.0
 				charge_state = ChargeState.IDLE
 
+func _build_spear(body: Node2D) -> void:
+	# Long shaft with a steel tip, held up-right at rest (chase / charge soldiers).
+	var weapon := Node2D.new()
+	weapon.position = Vector2(9, -6)
+	weapon.rotation = -0.62
+	body.add_child(weapon)
+
+	var shaft := Polygon2D.new()
+	shaft.polygon = PackedVector2Array([
+		Vector2(0, -1.4), Vector2(26, -1.4), Vector2(26, 1.4), Vector2(0, 1.4),
+	])
+	shaft.color = Color(0.45, 0.28, 0.15)   # brown shaft
+	weapon.add_child(shaft)
+
+	var tip := Polygon2D.new()
+	tip.polygon = PackedVector2Array([Vector2(25, -3.4), Vector2(34, 0), Vector2(25, 3.4)])
+	tip.color = Color(0.88, 0.9, 0.93)       # steel tip
+	weapon.add_child(tip)
+
+
+func _build_bow(body: Node2D) -> void:
+	# Bow arc bulging forward (+X) with a string between the tips — ranged soldiers.
+	var weapon := Node2D.new()
+	weapon.position = Vector2(10, -6)
+	body.add_child(weapon)
+
+	var bow_pts := PackedVector2Array()
+	for i in range(9):
+		var a := lerpf(-1.15, 1.15, float(i) / 8.0)
+		bow_pts.append(Vector2(cos(a) * 13.0 - 5.0, sin(a) * 13.0))
+	var bow := Line2D.new()
+	bow.points = bow_pts
+	bow.width = 3.0
+	bow.default_color = Color(0.45, 0.28, 0.15)   # brown bow
+	weapon.add_child(bow)
+
+	var string := Line2D.new()
+	string.points = PackedVector2Array([bow_pts[0], bow_pts[8]])
+	string.width = 1.5
+	string.default_color = Color(0.85, 0.82, 0.75)   # light string
+	weapon.add_child(string)
+
+
 func _fire_projectile(direction: Vector2) -> void:
 	# Lazy load: avoids a compile-time dependency cycle with projectile.tscn
 	var scene := load("res://scenes/game/projectile.tscn") as PackedScene
 	if scene == null:
 		return
+
+	SoundManager.play_shoot()
 
 	# Try to use PoolManager for projectile pooling
 	var pool_manager := get_tree().get_first_node_in_group("pool_manager")
@@ -221,6 +298,7 @@ func take_damage(amount: int) -> void:
 	if not is_alive:
 		return
 
+	SoundManager.play_hit()
 	var defense_value: int = 0
 	if enemy_data != null:
 		defense_value = enemy_data.defense
