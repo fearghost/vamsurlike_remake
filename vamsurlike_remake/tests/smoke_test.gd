@@ -383,10 +383,13 @@ func _test_auto_attack_and_collision() -> void:
 		failures.append("collision: player mask %d includes enemy layer %d — enemies physically block the player (stuck-on-contact bug)" % [player.collision_mask, enemy.collision_layer])
 	else:
 		passes.append("player does not collide with enemies (no stuck-on-contact)")
-	if enemy.collision_mask != 0:
-		failures.append("collision: enemy mask %d — enemies must not physically detect the player (distance-based contact damage instead)" % [enemy.collision_mask])
+	var enemy_allowed := 1 << (4 - 1)  # OBSTACLE_LAYER (4) — see MapConfig; enemies may only detect obstacles
+	if enemy.collision_mask & player.collision_layer != 0:
+		failures.append("collision: enemy mask %d includes the player layer — enemies must not physically detect the player (distance-based contact damage instead)" % [enemy.collision_mask])
+	elif enemy.collision_mask & ~enemy_allowed != 0:
+		failures.append("collision: enemy mask %d — enemies may only detect the obstacle layer (%d)" % [enemy.collision_mask, enemy_allowed])
 	else:
-		passes.append("enemies do not physically collide with the player")
+		passes.append("enemies do not physically collide with the player (obstacles allowed)")
 
 	# 6a2. Distance-based contact damage must actually trigger when an enemy is in range.
 	var stats := player.get_node_or_null("PlayerStats")

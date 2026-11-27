@@ -39,12 +39,12 @@ func _ready() -> void:
 	# Add to enemies group so AutoAttack can find them
 	add_to_group("enemies")
 
-	# Collision setup: enemies live on layer 2 but detect NOTHING (mask 0).
-	# They never physically collide with the player or each other — contact
-	# damage is distance-based instead, so chasing enemies pass through the
-	# player without sticking to them.
+	# Collision setup: enemies live on layer 2 and detect only obstacles
+	# (layer 4) so they cannot walk through trees/rocks. They never physically
+	# collide with the player or each other — contact damage is distance-based
+	# instead, so chasing enemies pass through the player without sticking to them.
 	collision_layer = 2
-	collision_mask = 0
+	collision_mask = MapConfig.OBSTACLE_MASK
 
 	# Auto-discover player reference
 	player_ref = _find_player()

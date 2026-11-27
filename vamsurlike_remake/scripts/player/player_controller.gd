@@ -17,13 +17,13 @@ var auto_attack: AutoAttack  # reference to AutoAttack component
 func _ready() -> void:
 	add_to_group("player")
 
-	# Collision setup: player lives on layer 1 and collides with NOTHING
-	# (mask 0). Enemies must not physically block the player — a chasing
-	# enemy pushes the player and, with two or more enemies, boxes it in so
-	# it cannot move at all. Contact damage is distance-based on the enemy
+	# Collision setup: player lives on layer 1 and detects only obstacles
+	# (layer 4) — trees/rocks block movement. Enemies must NOT physically
+	# block the player (a chasing enemy pushes it and boxes it in), so they
+	# stay out of the mask; contact damage is distance-based on the enemy
 	# side (see EnemyAI._check_contact_damage), not collision-driven.
 	collision_layer = 1
-	collision_mask = 0
+	collision_mask = MapConfig.OBSTACLE_MASK
 
 	# Create dummy sprite (blue ColorRect) if no child sprite exists
 	if find_child("Body") == null:
