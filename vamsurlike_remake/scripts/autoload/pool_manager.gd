@@ -19,7 +19,7 @@ func register_pool(name: String, template: PackedScene, size: int) -> void:
 	if pool_script == null:
 		push_error("PoolManager: failed to load object_pool.gd — pool '%s' not registered" % name)
 		return
-	var p  # untyped — dynamic dispatch to the attached ObjectPool script
+	var p: Variant  # explicit Variant — dynamic dispatch to the attached ObjectPool script
 	p = Node.new()
 	p.set_script(pool_script)
 	# Keep the pool in the tree so get_object() can attach instances to it.

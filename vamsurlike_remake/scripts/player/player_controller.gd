@@ -39,7 +39,8 @@ func _ready() -> void:
 			var data = load("res://data/characters/%s.tres" % char_id) as CharacterData
 			if data == null:
 				push_error("[PlayerController] character '%s' missing — falling back to female knight" % char_id)
-			var body  # untyped — dynamic dispatch to the attached CharacterBody script
+				data = load("res://data/characters/female_knight.tres") as CharacterData
+			var body: Variant  # explicit Variant — dynamic dispatch to the attached CharacterBody script
 			body = Node2D.new()
 			body.set_script(body_script)
 			body.name = "Body"

@@ -33,7 +33,7 @@ static func load_character(id: String) -> CharacterData:
 
 
 func _ready() -> void:
-	if child_count > 0:
+	if get_child_count() > 0:
 		return  # already built (e.g. declared in a .tscn) — do not duplicate
 	var data := character if character != null else load_character("female_knight")
 	_build(data)

@@ -29,7 +29,7 @@ func _build_preview(node: Node2D, character_id: String) -> void:
 	var data = load("res://data/characters/%s.tres" % character_id) as CharacterData
 	if data == null:
 		push_error("[CharacterSelect] character '%s' missing — preview will fall back to female knight" % character_id)
-	var body  # untyped — dynamic dispatch to the attached CharacterBody script
+	var body: Variant  # explicit Variant — dynamic dispatch to the attached CharacterBody script
 	body = Node2D.new()
 	body.set_script(body_script)
 	body.name = "CharacterBody"
