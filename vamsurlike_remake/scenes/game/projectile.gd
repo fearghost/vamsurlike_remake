@@ -4,6 +4,8 @@ extends Area2D
 
 ## A projectile fired by either the player or enemies.
 ## Uses PoolManager for object pooling when available.
+## Straight flight: velocity is set once at launch and never adjusted afterwards —
+## no homing, no steering; the shot travels in the direction it was fired.
 
 @export var damage: int = 10
 @export var speed: float = 400.0
@@ -55,10 +57,10 @@ func apply_source_style() -> void:
 
 	if source_type == "player":
 		# Player shots only ever hit enemies (layer 2) — never the player itself.
-		collision_mask = 2
+		collision_mask = 2 | MapConfig.OBSTACLE_MASK
 	else:
 		# Enemy shots only ever hit the player (layer 1) — never other enemies.
-		collision_mask = 1
+		collision_mask = 1 | MapConfig.OBSTACLE_MASK
 
 	var visual := get_node_or_null("Visual") as Node2D
 	if visual == null:
@@ -70,26 +72,45 @@ func apply_source_style() -> void:
 		child.free()
 
 	if source_type == "player":
-		_build_bullet(visual)
+		_build_dark_magic(visual)
 	else:
 		_build_arrow(visual)
 
 
-## Bullet profile (pointing +X): elongated hexagonal body with a bright core stripe.
-func _build_bullet(parent: Node2D) -> void:
+## Dark magic (검기) profile (pointing +X): a shadow-energy comet — soft violet halo,
+## dark teardrop body with a bright violet-white core trailing behind the head.
+func _build_dark_magic(parent: Node2D) -> void:
+	# Soft outer glow — large translucent ellipse reads as an energy aura
+	var glow := Polygon2D.new()
+	glow.polygon = PackedVector2Array([
+		Vector2(14, 0), Vector2(8, -6.5), Vector2(-10, -5.0), Vector2(-12, 0),
+		Vector2(-10, 5.0), Vector2(8, 6.5),
+	])
+	glow.color = Color(0.35, 0.12, 0.55, 0.30)   # translucent violet aura
+	parent.add_child(glow)
+	# Dark teardrop body — head at +X tapering to a tail behind it
 	var outer := Polygon2D.new()
 	outer.polygon = PackedVector2Array([
-		Vector2(13, 0), Vector2(6, -3.4), Vector2(-8, -3.4), Vector2(-11, -1.8),
-		Vector2(-11, 1.8), Vector2(-8, 3.4), Vector2(6, 3.4),
+		Vector2(16, 0), Vector2(5, -4.8), Vector2(-11, -3.6), Vector2(-14, 0),
+		Vector2(-11, 3.6), Vector2(5, 4.8),
 	])
-	outer.color = Color(1.0, 0.95, 0.35)   # bright yellow bullet
+	outer.color = Color(0.20, 0.07, 0.36, 1)   # deep shadow violet body
 	parent.add_child(outer)
+	# Mid layer — brighter inner teardrop for depth
+	var mid := Polygon2D.new()
+	mid.polygon = PackedVector2Array([
+		Vector2(11, 0), Vector2(4, -3.1), Vector2(-8, -2.2), Vector2(-9.5, 0),
+		Vector2(-8, 2.2), Vector2(4, 3.1),
+	])
+	mid.color = Color(0.48, 0.20, 0.72, 1)   # violet mid layer
+	parent.add_child(mid)
+	# Core — bright white-violet hot center near the head
 	var core := Polygon2D.new()
 	core.polygon = PackedVector2Array([
-		Vector2(9, 0), Vector2(5, -1.4), Vector2(-8, -1.4),
-		Vector2(-8, 1.4), Vector2(5, 1.4),
+		Vector2(8, 0), Vector2(3, -1.9), Vector2(-4, -1.5), Vector2(-4.6, 0),
+		Vector2(-4, 1.5), Vector2(3, 1.9),
 	])
-	core.color = Color(1.0, 0.99, 0.75)   # near-white core stripe
+	core.color = Color(0.88, 0.72, 1.00, 1)   # bright violet-white core
 	parent.add_child(core)
 
 
@@ -158,6 +179,12 @@ func set_damage(amount: int) -> void:
 
 
 func _handle_body_entered(body: Node) -> void:
+	# Obstacles (trees/rocks on layer 4) block the shot — it dies on impact,
+	# before any damage logic runs. No group check needed: obstacles are the only
+	# StaticBody2D in this mask and never carry gameplay groups.
+	if body is StaticBody2D and (body as StaticBody2D).collision_layer & MapConfig.OBSTACLE_MASK != 0:
+		_on_destroyed()
+		return
 	# Group/method checks instead of `is EnemyAI` / `is PlayerStats`: type
 	# references force GDScript to compile those classes at load time, which
 	# created a circular dependency (projectile.gd -> enemy_ai.gd -> ...).

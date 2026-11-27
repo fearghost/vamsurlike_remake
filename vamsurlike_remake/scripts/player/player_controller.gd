@@ -25,7 +25,7 @@ func _ready() -> void:
 	collision_layer = 1
 	collision_mask = MapConfig.OBSTACLE_MASK
 
-	# Build the quarter-view body (shadow + flattened ellipse + highlight) if no child Body exists
+	# Build the quarter-view female knight (white armor + blue cape) if no child Body exists — flat boxes read as top-down, this reads as viewed from above at an angle.
 	if find_child("Body") == null:
 		var body := Node2D.new()
 		body.name = "Body"
@@ -37,19 +37,72 @@ func _ready() -> void:
 		shadow.position = Vector2(4, 9)
 		body.add_child(shadow)
 
-		# Body — slightly flattened ellipse reads as viewed from above at an angle
+		# Blue cape — flows behind the figure down past the feet (drawn first so it sits under everything else)
+		var cape := Polygon2D.new()
+		cape.polygon = PackedVector2Array([
+			Vector2(-8.0, -12.0), Vector2(8.0, -12.0),
+			Vector2(13.5, 6.0), Vector2(9.0, 16.0),
+			Vector2(-9.0, 16.0), Vector2(-13.5, 6.0),
+		])
+		cape.color = Color(0.14, 0.30, 0.85, 1)   # blue cape
+		body.add_child(cape)
+
+		var cape_shade := Polygon2D.new()
+		cape_shade.polygon = PackedVector2Array([
+			Vector2(-6.5, -10.0), Vector2(6.5, -10.0),
+			Vector2(9.5, 4.0), Vector2(6.0, 12.5),
+			Vector2(-6.0, 12.5), Vector2(-9.5, 4.0),
+		])
+		cape_shade.color = Color(0.10, 0.20, 0.62, 1)   # darker inner fold
+		body.add_child(cape_shade)
+
+		# White armored body — slightly flattened ellipse reads as viewed from above at an angle
 		var circle := Polygon2D.new()
-		circle.polygon = _ellipse_polygon(15.0, 12.5)
-		circle.color = Color(0.20, 0.42, 1.00, 1)
+		circle.polygon = _ellipse_polygon(13.5, 11.0)
+		circle.color = Color(0.90, 0.92, 0.96, 1)   # white/silver armor
 		circle.position = Vector2(0, -3)
 		body.add_child(circle)
 
-		# Highlight — upper-left light source
+		# Highlight — upper-left light source (brighter than the armor)
 		var hi := Polygon2D.new()
-		hi.polygon = _ellipse_polygon(6.5, 4.5)
-		hi.color = Color(0.55, 0.75, 1.00, 1)
+		hi.polygon = _ellipse_polygon(6.0, 4.5)
+		hi.color = Color(1.00, 1.00, 1.00, 1)   # near-white sheen
 		hi.position = Vector2(-4.5, -7.5)
 		body.add_child(hi)
+
+		# Head — skin tone with brown hair (female look: visible locks past the shoulders)
+		var head := Polygon2D.new()
+		head.polygon = _ellipse_polygon(6.0, 5.5)
+		head.color = Color(0.96, 0.80, 0.66, 1)   # skin tone
+		head.position = Vector2(0, -14.5)
+		body.add_child(head)
+
+		var hair := Polygon2D.new()
+		hair.polygon = PackedVector2Array([
+			Vector2(-6.0, -15.5), Vector2(-4.5, -20.5), Vector2(0, -21.5),
+			Vector2(4.5, -20.5), Vector2(6.0, -15.5), Vector2(3.5, -17.5),
+			Vector2(-3.5, -17.5),
+		])
+		hair.color = Color(0.32, 0.20, 0.11, 1)   # brown hair
+		body.add_child(hair)
+
+		# Side locks — two strands hanging down past the shoulders (in front of the cape edges)
+		for side in [-1, 1]:
+			var lock := Polygon2D.new()
+			lock.polygon = PackedVector2Array([
+				Vector2(side * 5.0, -15.0), Vector2(side * 8.5, -13.0),
+				Vector2(side * 7.0, -3.0), Vector2(side * 4.5, -6.0),
+			])
+			lock.color = Color(0.32, 0.20, 0.11, 1)   # brown hair
+			body.add_child(lock)
+
+		# White circlet band across the forehead — reads as a knight's headband over the hairline
+		var band := Polygon2D.new()
+		band.polygon = PackedVector2Array([
+			Vector2(-5.0, -18.5), Vector2(5.0, -18.5), Vector2(4.2, -16.8), Vector2(-4.2, -16.8),
+		])
+		band.color = Color(0.95, 0.95, 1.00, 1)   # white band
+		body.add_child(band)
 
 		add_child(body)
 

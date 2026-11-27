@@ -60,11 +60,12 @@ func _ready() -> void:
 	# projectile.gd -> EnemyAI class -> enemy_ai.gd -> projectile.tscn) that
 	# intermittently breaks resource loading with "Parse Error: Busy".
 
-	# Build the quarter-view soldier (shadow + boots + tunic + helmet + weapon) if
+	# Build the quarter-view black-armored soldier (shadow + boots + tunic + helmet + weapon) if
 	# the scene doesn't provide one — flat boxes read as top-down; this reads as
-	# viewed from above at an angle. Color stays pattern-coded for readability.
+	# viewed from above at an angle. The armor is always black; only the helmet
+	# plume stays pattern-coded so enemy types remain distinguishable at a glance.
 	if find_child("Sprite") == null:
-		var base := Color(1.0, 0.3, 0.3)   # chase red (default)
+		var base := Color(1.0, 0.3, 0.3)   # chase red (default) — used for the plume only
 		match current_pattern:
 			"ranged":
 				base = Color(0.8, 0.4, 0.8)  # purple for ranged
@@ -81,37 +82,37 @@ func _ready() -> void:
 		shadow.position = Vector2(4, 9)
 		body.add_child(shadow)
 
-		# Boots — two small dark feet peeking below the tunic
+		# Boots — two small near-black feet peeking below the tunic
 		for side in [-1, 1]:
 			var leg := Polygon2D.new()
 			leg.polygon = _ellipse_polygon(3.5, 4.5)
-			leg.color = Color(0.16, 0.12, 0.14)
+			leg.color = Color(0.08, 0.08, 0.10)   # near-black boots
 			leg.position = Vector2(side * 5.0, 6.0)
 			body.add_child(leg)
 
-		# Tunic — slightly flattened ellipse reads as viewed from above at an angle
+		# Tunic — slightly flattened ellipse reads as viewed from above at an angle; black armor
 		var circle := Polygon2D.new()
 		circle.polygon = _ellipse_polygon(13.0, 10.5)
-		circle.color = base
+		circle.color = Color(0.11, 0.12, 0.15, 1)   # black armor body
 		circle.position = Vector2(0, -3)
 		body.add_child(circle)
 
-		# Highlight — upper-left light source (lighter than the body color)
+		# Highlight — upper-left light source (subtle steel sheen on the black armor)
 		var hi := Polygon2D.new()
 		hi.polygon = _ellipse_polygon(6.0, 4.5)
-		hi.color = base.lerp(Color.WHITE, 0.45)
+		hi.color = Color(0.30, 0.32, 0.38, 1)   # dark steel sheen
 		hi.position = Vector2(-4.0, -7.0)
 		body.add_child(hi)
 
-		# Helmet — steel circle with a small pattern-colored plume on top
+		# Helmet — blackened iron circle with a small pattern-colored plume on top
 		var helmet := Polygon2D.new()
 		helmet.polygon = _ellipse_polygon(6.5, 6.0)
-		helmet.color = Color(0.62, 0.66, 0.72)
+		helmet.color = Color(0.16, 0.17, 0.20, 1)   # blackened iron helmet
 		helmet.position = Vector2(0, -13.5)
 		body.add_child(helmet)
 		var helmet_hi := Polygon2D.new()
 		helmet_hi.polygon = _ellipse_polygon(3.0, 2.4)
-		helmet_hi.color = Color(0.85, 0.87, 0.9)
+		helmet_hi.color = Color(0.42, 0.44, 0.50, 1)   # steel rim highlight
 		helmet_hi.position = Vector2(-1.8, -15.5)
 		body.add_child(helmet_hi)
 		var plume := Polygon2D.new()
