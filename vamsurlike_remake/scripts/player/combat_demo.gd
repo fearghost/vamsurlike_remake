@@ -150,10 +150,9 @@ func _setup_environment() -> void:
 		var h := rng.randf_range(6.0, 22.0)
 		# Flat ellipse tufts (wider than tall) — reads as ground texture in quarter view
 		# instead of floating rotated rectangles.
-		var patch := Ellipse2D.new()
+		var patch := Polygon2D.new()
+		patch.polygon = _ellipse_polygon(w * 0.5, h * 0.45)
 		patch.color = palette[rng.randi() % palette.size()]
-		patch.radius_x = w * 0.5
-		patch.radius_y = h * 0.45
 		patch.position = Vector2(
 			rng.randf_range(w + 20.0, MapConfig.MAP_SIZE.x - w - 20.0),
 			rng.randf_range(h + 20.0, MapConfig.MAP_SIZE.y - h - 20.0)
@@ -180,6 +179,14 @@ func _setup_environment() -> void:
 		idx += 1
 
 
+func _ellipse_polygon(rx: float, ry: float, segments: int = 20) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for i in range(segments):
+		var a := TAU * float(i) / float(segments)
+		pts.append(Vector2(cos(a) * rx, sin(a) * ry))
+	return pts
+
+
 func _circle_polygon(radius: float, segments: int = 16) -> PackedVector2Array:
 	var pts := PackedVector2Array()
 	for i in range(segments):
@@ -204,10 +211,9 @@ func _make_obstacle(pos: Vector2, radius: float, type: String, node_name: String
 
 	# Ground shadow — grounds the object in quarter view (light from upper-left,
 	# so the shadow falls lower-right and peeks out below the base). Added first so it renders behind the trunk/crown.
-	var shadow := Ellipse2D.new()
+	var shadow := Polygon2D.new()
+	shadow.polygon = _ellipse_polygon(radius * 1.05, radius * 0.40)
 	shadow.color = Color(0, 0, 0, 0.28)
-	shadow.radius_x = radius * 1.05
-	shadow.radius_y = radius * 0.40
 	shadow.position = Vector2(4, radius * 0.58)
 	body.add_child(shadow)
 

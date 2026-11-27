@@ -25,32 +25,29 @@ func _ready() -> void:
 	collision_layer = 1
 	collision_mask = MapConfig.OBSTACLE_MASK
 
-	# Build the quarter-view body (shadow + flattened circle + highlight) if no child Body exists
+	# Build the quarter-view body (shadow + flattened ellipse + highlight) if no child Body exists
 	if find_child("Body") == null:
 		var body := Node2D.new()
 		body.name = "Body"
 
 		# Ground shadow — light from upper-left, so the shadow falls lower-right and peeks out below the base
-		var shadow := Ellipse2D.new()
+		var shadow := Polygon2D.new()
+		shadow.polygon = _ellipse_polygon(15.0, 6.0)
 		shadow.color = Color(0, 0, 0, 0.30)
-		shadow.radius_x = 15.0
-		shadow.radius_y = 6.0
 		shadow.position = Vector2(4, 9)
 		body.add_child(shadow)
 
 		# Body — slightly flattened ellipse reads as viewed from above at an angle
-		var circle := Ellipse2D.new()
+		var circle := Polygon2D.new()
+		circle.polygon = _ellipse_polygon(15.0, 12.5)
 		circle.color = Color(0.20, 0.42, 1.00, 1)
-		circle.radius_x = 15.0
-		circle.radius_y = 12.5
 		circle.position = Vector2(0, -3)
 		body.add_child(circle)
 
 		# Highlight — upper-left light source
-		var hi := Ellipse2D.new()
+		var hi := Polygon2D.new()
+		hi.polygon = _ellipse_polygon(6.5, 4.5)
 		hi.color = Color(0.55, 0.75, 1.00, 1)
-		hi.radius_x = 6.5
-		hi.radius_y = 4.5
 		hi.position = Vector2(-4.5, -7.5)
 		body.add_child(hi)
 
@@ -105,3 +102,10 @@ func stop_auto_attack() -> void:
 func _on_player_stats_died() -> void:
 	stop_auto_attack()
 	print("Player has died.")
+
+func _ellipse_polygon(rx: float, ry: float, segments: int = 20) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for i in range(segments):
+		var a := TAU * float(i) / float(segments)
+		pts.append(Vector2(cos(a) * rx, sin(a) * ry))
+	return pts
