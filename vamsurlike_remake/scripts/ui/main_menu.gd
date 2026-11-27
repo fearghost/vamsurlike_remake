@@ -24,13 +24,13 @@ func _on_start_pressed() -> void:
 	if gm != null:
 		gm.reset_game()
 		print("[MainMenu] GameManager reset done")
-	var scene_path := "res://scenes/game/combat_demo.tscn"
+	var scene_path := "res://scenes/ui/character_select.tscn"
 	var scene := load(scene_path)
 	if scene == null:
 		push_error("[MainMenu] FAILED to load scene: %s" % scene_path)
 		printerr("[MainMenu] Scene load failed!")
 		return
-	print("[MainMenu] Scene loaded, changing...")
+	print("[MainMenu] Character select loaded, changing...")
 	var result := get_tree().change_scene_to_packed(scene)
 	print("[MainMenu] change_scene result: %d" % result)
 

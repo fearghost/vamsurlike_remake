@@ -57,3 +57,15 @@ func reset_game() -> void:
 ## Returns a reference to the player base stats dictionary.
 func get_player_stats() -> Dictionary:
 	return player_base_stats
+
+
+## Identifier of the character chosen in the select screen (data/characters/*.tres).
+var selected_character: String = "female_knight"
+
+
+func set_selected_character(id: String) -> void:
+	selected_character = id
+
+
+func get_selected_character() -> String:
+	return selected_character

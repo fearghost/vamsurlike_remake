@@ -192,14 +192,32 @@ func _test_start_button_flow() -> void:
 	var cs := current_scene
 	if cs == null:
 		failures.append("Start flow: current_scene is null after _on_start_pressed() — scene change did not happen")
-		printerr("[FAIL] Start flow: scene change did not happen (combat_demo.tscn load or change_scene_to_packed failed)")
+		printerr("[FAIL] Start flow: scene change did not happen (character_select.tscn load or change_scene_to_packed failed)")
 		return
 
 	print("[info] current_scene after Start press: %s" % cs.name)
-	if not cs.name.to_lower().contains("combat"):
-		failures.append("Start flow: current_scene is '%s', expected the combat scene" % cs.name)
+	var cs_name := cs.name.to_lower()
+	if not (cs_name.contains("character") or cs_name.contains("select")):
+		failures.append("Start flow: current_scene is '%s', expected the character select screen" % cs.name)
 	else:
-		passes.append("Start button transitions to combat scene (%s)" % cs.name)
+		passes.append("Start button transitions to character select (%s)" % cs.name)
+
+	# Pick a knight through the real card-button path — this is what actually
+	# launches combat now, so verify it too.
+	var pick_button := _find_card_button(cs)
+	if pick_button == null:
+		failures.append("Start flow: no character select button found on the select screen")
+	else:
+		pick_button.press()
+		await process_frame
+		await process_frame
+		await process_frame
+
+	var cs2 := current_scene
+	if cs2 == null or not cs2.name.to_lower().contains("combat"):
+		failures.append("Start flow: after selecting a character, current_scene is '%s' — expected the combat scene" % str(cs2))
+	else:
+		passes.append("Character selection transitions to combat scene (%s)" % cs2.name)
 
 	# Let the combat scene run a few frames to surface runtime errors in _ready.
 	await process_frame
@@ -341,6 +359,18 @@ func _dismiss_level_up(cs: Node) -> void:
 					break
 				guard += 1
 		paused = false
+
+
+func _find_card_button(node: Node) -> Button:
+	var buttons := _find_buttons(node)
+	for b in buttons:
+		var n := b.name.to_lower()
+		if (n.contains("female") or n.contains("male")) and not n.contains("back"):
+			return b
+	for b in buttons:
+		if not b.name.to_lower().contains("back"):
+			return b
+	return null
 
 
 func _find_buttons(node: Node) -> Array[Button]:
