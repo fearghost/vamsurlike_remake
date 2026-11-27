@@ -493,8 +493,8 @@ func _test_auto_attack_and_collision() -> void:
 			player.global_position = target_pos + Vector2(0, hit_r + 40.0)   # south of the obstacle
 			player.set_input_direction(Vector2(0, -1))   # toward it (north/up)
 
-			var deadline := Time.get_ticks_msec() + 600
-			while Time.get_ticks_msec() < deadline:
+			var block_deadline := Time.get_ticks_msec() + 600
+			while Time.get_ticks_msec() < block_deadline:
 				await process_frame
 				_dismiss_level_up(cs)
 
