@@ -499,7 +499,7 @@ func _test_auto_attack_and_collision() -> void:
 				_dismiss_level_up(cs)
 
 			player.set_input_direction(Vector2.ZERO)   # reset so later phases are unaffected
-			var final_dist := player.global_position.distance_to(target_pos)
+			var final_dist: float = player.global_position.distance_to(target_pos)
 			if final_dist >= hit_r + 5.0:
 				passes.append("player is physically blocked by an obstacle (never entered the inner region)")
 			else:
